@@ -19,7 +19,7 @@
       function cleanup(){ delete window[cb]; s.remove(); }
       s.onerror=()=>{ if(!done){cleanup(); resolve(backendUnavailable());} };
       s.src=u.toString(); document.head.appendChild(s);
-      setTimeout(()=>{ if(!done){cleanup(); resolve(backendUnavailable());} },9000);
+      setTimeout(()=>{ if(!done){cleanup(); resolve(backendUnavailable());} },45000);
     });
   }
   window.StormAPI={hasApi,appUrl,publicData};
