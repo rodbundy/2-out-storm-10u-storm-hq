@@ -1,0 +1,12 @@
+CUSTOM DOMAIN - ADD ONLY AFTER THE TEMPORARY GITHUB PAGES SITE PASSES TESTING
+
+Target domain: 2outstorm2035.com
+
+Do not add a CNAME file before the temporary GitHub Pages URL is tested.
+When ready:
+1. GitHub repository > Settings > Pages.
+2. Custom domain: 2outstorm2035.com
+3. Save.
+4. GitHub will create/manage the repository CNAME file for the Pages deployment.
+5. Confirm Namecheap DNS points to GitHub Pages.
+6. After DNS succeeds, enable Enforce HTTPS.
