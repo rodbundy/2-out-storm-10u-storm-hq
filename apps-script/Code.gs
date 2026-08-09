@@ -198,7 +198,18 @@ function saveRowDirect_(sheetName,record) {
 function adminDeleteRow(token,sheetName,keyValue){ requireAdmin_(token); if(!ADMIN_EDITABLE.includes(sheetName))throw new Error('Not allowed.'); const key=KEY_FIELD[sheetName],sh=ensureSheet_(sheetName),data=rows_(sheetName); let row=0;data.some((r,i)=>{if(String(r[key])===String(keyValue)){row=i+2;return true;}return false;});if(row)sh.deleteRow(row);logAdmin_('DELETE',sheetName,String(keyValue),'Coach Control Center');return {ok:true}; }
 
 function adminUploadImage(token,imageData,fileName,mimeType,purpose){ requireAdmin_(token); const folders={'player':'Storm HQ - Player Photos','team':'Storm HQ - Team Photos','logo':'Storm HQ - Brand Assets','homework':'Storm HQ - Homework Media'}; const folder=folders[purpose]||folders.team; return {ok:true,url:saveBase64File_(imageData,fileName||'storm-photo.jpg',mimeType||'image/jpeg',folder)}; }
-function saveBase64File_(data,fileName,mimeType,folderName){ const clean=String(data||'').replace(/^data:[^;]+;base64,/,''); if(!clean)throw new Error('No file data received.'); const blob=Utilities.newBlob(Utilities.base64Decode(clean),mimeType,fileName); const file=ensureDriveFolder_(folderName).createFile(blob); try{file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);}catch(e){} return 'https://drive.google.com/uc?export=view&id='+file.getId(); }
+function saveBase64File_(data,fileName,mimeType,folderName){
+  const raw=String(data||'');
+  const mimeFromData=(raw.match(/^data:([^;]+);base64,/)||[])[1];
+  const finalMime=mimeType||mimeFromData||'image/jpeg';
+  const clean=raw.replace(/^data:[^;]+;base64,/,'').replace(/ /g,'+');
+  if(!clean)throw new Error('No file data received.');
+  const blob=Utilities.newBlob(Utilities.base64Decode(clean),finalMime,fileName||'storm-photo.jpg');
+  const file=ensureDriveFolder_(folderName).createFile(blob);
+  try{file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);}catch(e){}
+  Utilities.sleep(750);
+  return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(file.getId())+'&sz=w2400';
+}
 function ensureDriveFolder_(name){ const it=DriveApp.getFoldersByName(name); return it.hasNext()?it.next():DriveApp.createFolder(name); }
 
 function adminSaveEventRoster(token,eventId,group,playerIds,notes){ requireAdmin_(token); eventId=String(eventId);group=group||'Event Group'; const sh=ensureSheet_('Event Rosters'); const all=rows_('Event Rosters'); const keep=all.filter(r=>!(String(r.EventID)===eventId&&String(r.Group||'Event Group')===String(group))); sh.clearContents(); sh.getRange(1,1,1,HEADERS['Event Rosters'].length).setValues([HEADERS['Event Rosters']]); const players=rows_('Website Players'),byId={};players.forEach(p=>byId[String(p.PlayerID)]=p); const now=new Date(); const rows=keep.concat((playerIds||[]).map(pid=>({RosterID:'roster-'+Utilities.getUuid().slice(0,8),EventID:eventId,PlayerID:pid,PlayerName:byId[String(pid)]?byId[String(pid)].FirstName:'',Group:group,Assigned:'YES',Notes:notes||'',UpdatedAt:now}))); if(rows.length)sh.getRange(2,1,rows.length,HEADERS['Event Rosters'].length).setValues(rows.map(r=>HEADERS['Event Rosters'].map(h=>r[h]||''))); return {ok:true,count:(playerIds||[]).length}; }
@@ -213,7 +224,86 @@ function familyLogin(code){ const c=String(code||'').trim(),row=rows_('Parent Co
 function familyPlayerId_(token){ const id=token&&CacheService.getScriptCache().get('family:'+token);if(!id)throw new Error('Family session expired. Enter the player code again.');return id; }
 function getFamilyDashboard(token){ const pid=familyPlayerId_(token),player=publicRows_('Website Players').find(p=>String(p.PlayerID)===pid);if(!player)throw new Error('Player profile not found.');const today=Utilities.formatDate(new Date(),TZ,'yyyy-MM-dd');const events=publicRows_('Website Calendar').filter(e=>String(e.Date)>=today);const avail=rows_('Availability').filter(r=>String(r.PlayerID)===pid).map(serializeRecord_);const weeks=publicRows_('Homework Weeks').filter(w=>['ACTIVE','SCHEDULED'].includes(String(w.Status||'').toUpperCase()));const weekIds=new Set(weeks.map(w=>String(w.WeekID)));const tasks=rows_('Homework Tasks').filter(t=>weekIds.has(String(t.WeekID))).map(serializeRecord_);const questions=rows_('Homework Questions').filter(q=>weekIds.has(String(q.WeekID))).map(q=>{const o=serializeRecord_(q);delete o.CorrectAnswer;return o;});const responses=rows_('Homework Responses').filter(r=>String(r.PlayerID)===pid).map(serializeRecord_);const messages=publicRows_('Website Announcements').filter(a=>['FAMILY','BOTH'].includes(String(a.Visibility||'PUBLIC').toUpperCase()));const roster=rows_('Event Rosters').filter(r=>String(r.PlayerID)===pid&&String(r.Assigned||'YES').toUpperCase()==='YES').map(serializeRecord_);return {ok:true,player:player,events:events,availability:avail,weeks:weeks,tasks:tasks,questions:questions,responses:responses,messages:messages,eventRoster:roster,settings:getSettings_()}; }
 function saveAvailability(token,eventId,status,notes){ const pid=familyPlayerId_(token),players=publicRows_('Website Players'),p=players.find(x=>String(x.PlayerID)===pid),event=publicRows_('Website Calendar').find(e=>String(e.EventID)===String(eventId));if(!event)throw new Error('Event not found.');if(!['READY FOR THE STORM','NOT AVAILABLE','FORECAST UNCERTAIN'].includes(String(status)))throw new Error('Invalid availability status.');const existing=rows_('Availability').find(r=>String(r.EventID)===String(eventId)&&String(r.PlayerID)===pid);const rec={AvailabilityID:existing?existing.AvailabilityID:'availability-'+Utilities.getUuid().slice(0,8),EventID:event.EventID,EventDate:event.Date,EventTitle:event.Title||event.Type,PlayerID:pid,PlayerName:p?p.FirstName:'',Status:status,Notes:notes||'',UpdatedAt:new Date()}; upsertPrivate_('Availability',rec);return {ok:true,record:serializeRecord_(rec)}; }
-function submitHomework(token,weekId,taskCompletion,answers){ const pid=familyPlayerId_(token),p=publicRows_('Website Players').find(x=>String(x.PlayerID)===pid),qs=rows_('Homework Questions').filter(q=>String(q.WeekID)===String(weekId));let score=0,max=0;const ans=answers||{};qs.forEach(q=>{const pts=Number(q.Points)||1;if(String(q.CorrectAnswer||'').trim()){max+=pts;if(String(ans[q.QuestionID]||'').trim().toLowerCase()===String(q.CorrectAnswer).trim().toLowerCase())score+=pts;}});const existing=rows_('Homework Responses').find(r=>String(r.WeekID)===String(weekId)&&String(r.PlayerID)===pid);const code=rows_('Parent Codes').find(r=>String(r.PlayerID)===pid);const masked=code?('••••'+String(code.ParentCode).slice(-2)):'';const rec={ResponseID:existing?existing.ResponseID:'response-'+Utilities.getUuid().slice(0,8),WeekID:weekId,PlayerID:pid,PlayerName:p?p.FirstName:'',TaskCompletionJSON:JSON.stringify(taskCompletion||{}),AnswersJSON:JSON.stringify(ans),Score:score,MaxScore:max,SubmittedAt:new Date(),ParentCodeMasked:masked};upsertPrivate_('Homework Responses',rec);return {ok:true,score:score,maxScore:max,submittedAt:serializeValue_('SubmittedAt',rec.SubmittedAt)}; }
+function submitHomework(token, weekId, taskCompletion, answers) {
+  const pid = familyPlayerId_(token);
+  const p = publicRows_('Website Players').find(
+    x => String(x.PlayerID) === pid
+  );
+
+  const qs = rows_('Homework Questions').filter(
+    q => String(q.WeekID) === String(weekId)
+  );
+
+  let score = 0;
+  let max = 0;
+  const ans = answers || {};
+
+  qs.forEach(q => {
+    const pts = Number(q.Points) || 1;
+
+    // IMPORTANT:
+    // FALSE is a valid answer and must not be treated as blank.
+    const correctRaw = q.CorrectAnswer;
+    const hasCorrectAnswer =
+      correctRaw !== '' &&
+      correctRaw !== null &&
+      correctRaw !== undefined;
+
+    if (hasCorrectAnswer) {
+      max += pts;
+
+      const submittedRaw =
+        Object.prototype.hasOwnProperty.call(ans, q.QuestionID)
+          ? ans[q.QuestionID]
+          : '';
+
+      const submittedAnswer = String(submittedRaw).trim().toLowerCase();
+      const correctAnswer = String(correctRaw).trim().toLowerCase();
+
+      if (submittedAnswer === correctAnswer) {
+        score += pts;
+      }
+    }
+  });
+
+  const existing = rows_('Homework Responses').find(
+    r =>
+      String(r.WeekID) === String(weekId) &&
+      String(r.PlayerID) === pid
+  );
+
+  const code = rows_('Parent Codes').find(
+    r => String(r.PlayerID) === pid
+  );
+
+  const masked = code
+    ? '••••' + String(code.ParentCode).slice(-2)
+    : '';
+
+  const rec = {
+    ResponseID: existing
+      ? existing.ResponseID
+      : 'response-' + Utilities.getUuid().slice(0, 8),
+    WeekID: weekId,
+    PlayerID: pid,
+    PlayerName: p ? p.FirstName : '',
+    TaskCompletionJSON: JSON.stringify(taskCompletion || {}),
+    AnswersJSON: JSON.stringify(ans),
+    Score: score,
+    MaxScore: max,
+    SubmittedAt: new Date(),
+    ParentCodeMasked: masked
+  };
+
+  upsertPrivate_('Homework Responses', rec);
+
+  return {
+    ok: true,
+    score: score,
+    maxScore: max,
+    submittedAt: serializeValue_('SubmittedAt', rec.SubmittedAt)
+  };
+}
 function submitFamilyPhoto(token,title,caption,imageData,fileName,mimeType,parentName){ const pid=familyPlayerId_(token),p=publicRows_('Website Players').find(x=>String(x.PlayerID)===pid);const url=saveBase64File_(imageData,fileName||'family-photo.jpg',mimeType||'image/jpeg','Storm HQ - Family Photo Submissions');const rec={SubmissionID:'photo-sub-'+Utilities.getUuid().slice(0,8),PlayerID:pid,PlayerName:p?p.FirstName:'',ParentName:parentName||'',Title:title||'Family Photo',Caption:caption||'',ImageURL:url,Status:'PENDING',SubmittedAt:new Date(),CoachNotes:''};upsertPrivate_('Parent Photo Submissions',rec);return {ok:true}; }
 function upsertPrivate_(sheetName,record){ const key=KEY_FIELD[sheetName],headers=HEADERS[sheetName],sh=ensureSheet_(sheetName),data=rows_(sheetName);let row=0;data.some((r,i)=>{if(String(r[key])===String(record[key])){row=i+2;return true;}return false;});if(!row)row=sh.getLastRow()+1;sh.getRange(row,1,1,headers.length).setValues([headers.map(h=>record[h]===undefined?'':record[h])]); }
 
@@ -251,3 +341,25 @@ function showCoachControlLink(){showLinkDialog_('Coach Control Center',(ScriptAp
 function showFamilyPortalLink(){showLinkDialog_('Family Portal',(ScriptApp.getService().getUrl()||'')+'?page=family');}
 function showLinkDialog_(title,url){const html=HtmlService.createHtmlOutput(`<div style="font:16px Arial;padding:20px"><h2>${title}</h2><p><a target="_blank" href="${url}">${url||'Deploy the web app first.'}</a></p></div>`).setWidth(520).setHeight(180);SpreadsheetApp.getUi().showModalDialog(html,title);}
 function logAdmin_(action,sheet,key,details){try{ensureSheet_('Admin Log').appendRow([new Date(),action,sheet,key,details]);}catch(e){}}
+function testFamilyPortalRender() {
+  const t = HtmlService.createTemplateFromFile('FamilyPortal');
+  t.appUrl = ScriptApp.getService().getUrl() || '';
+  t.eventId = '';
+  t.version = STORM_VERSION;
+
+  const html = t.evaluate().getContent();
+
+  Logger.log('Family Portal rendered successfully.');
+  Logger.log(html.substring(0, 200));
+}function testFamilyDoGetRoute() {
+  const response = doGet({
+    parameter: {
+      page: 'family'
+    }
+  });
+
+  const html = response.getContent();
+
+  Logger.log('Family doGet route rendered successfully.');
+  Logger.log(html.substring(0, 300));
+}
