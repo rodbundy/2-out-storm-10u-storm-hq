@@ -4,15 +4,15 @@
  * Family Portal, tryouts, homework, availability, player approval, media, and game-day lineups.
  */
 
-const STORM_VERSION = '5.0-master';
+const STORM_VERSION = '5.1-gamechanger-postgame';
 const TZ = 'America/New_York';
 
 const HEADERS = {
   'Website Settings': ['Key','Value','Notes'],
-  'Website Players': ['Show','Approved','PlayerID','Jersey','FirstName','LastInitial','Positions','BatsThrows','ClassYear','PhotoURL','BackgroundURL','StrongestPart','SeasonGoal','FavoriteColor','FavoritePlayer','Excitement','Quote','CardX','CardY','CardZoom','ProfileX','ProfileY','ProfileZoom','SortOrder'],
+  'Website Players': ['Show','Approved','PlayerID','Jersey','FirstName','LastInitial','Positions','BatsThrows','ClassYear','PhotoURL','BackgroundURL','StrongestPart','SeasonGoal','FavoriteColor','FavoritePlayer','Excitement','Quote','CardX','CardY','CardZoom','ProfileX','ProfileY','ProfileZoom','SortOrder','GameChangerURL','ShowStats'],
   'Website Calendar': ['Show','Approved','EventID','Date','Time','EndTime','Type','Title','Opponent','Location','Field','Address','DirectionsURL','ArrivalTime','Uniform','EventNotes','PublicNotes','Status','ScoreUs','ScoreThem','Result','RosterVisibility','SortOrder'],
   'Website Announcements': ['Show','Approved','AnnouncementID','Visibility','AlertLevel','Title','Message','StartDate','EndDate','ButtonText','ButtonURL','PinToHome','SortOrder'],
-  'Website Videos': ['Show','Approved','VideoID','Category','Title','Description','YouTubeID','VideoURL','ThumbnailURL','Date','EventID','PlayerID','Featured','SortOrder'],
+  'Website Videos': ['Show','Approved','VideoID','Category','Title','Description','YouTubeID','VideoURL','ThumbnailURL','Date','EventID','PlayerID','Featured','SortOrder','PlayerIDs','SourceType','SourceLabel','UploadedFileName'],
   'Website Shoutouts': ['Show','Approved','ShoutoutID','Category','Title','Player','Message','Date','SortOrder'],
   'Website Picture of the Week': ['Show','Approved','PictureID','Title','Week','Caption','ImageURL','SubmittedBy'],
   'Website Gallery': ['Show','Approved','PhotoID','Title','Caption','ImageURL','Date','PlayerID','Category','SortOrder'],
@@ -27,6 +27,7 @@ const HEADERS = {
   'Homework Responses': ['ResponseID','WeekID','PlayerID','PlayerName','TaskCompletionJSON','AnswersJSON','Score','MaxScore','SubmittedAt','ParentCodeMasked'],
   'Pending Players': ['SubmissionID','Timestamp','Status','PlayerID','FirstName','LastInitial','Jersey','Positions','BatsThrows','ClassYear','StrongestPart','SeasonGoal','FavoriteColor','FavoritePlayer','Excitement','Quote','ParentName','ParentEmail','ParentPhone','PhotoPermission','RawJSON','CoachNotes'],
   'Parent Photo Submissions': ['SubmissionID','PlayerID','PlayerName','ParentName','Title','Caption','ImageURL','Status','SubmittedAt','CoachNotes'],
+  'Player Stats': ['StatsID','PlayerID','Number','Last','First','UpdatedAt','Source','Bat_GP','Bat_PA','Bat_AB','Bat_AVG','Bat_OBP','Bat_OPS','Bat_SLG','Bat_H','Bat_2B','Bat_3B','Bat_HR','Bat_RBI','Bat_R','Bat_BB','Bat_SO','Bat_SB','Pit_IP','Pit_GP','Pit_GS','Pit_W','Pit_L','Pit_ERA','Pit_WHIP','Pit_SO','Pit_BB','Pit_H','Pit_ER','Fld_TC','Fld_A','Fld_PO','Fld_FPCT','Fld_E','RawJSON'],
   'Form Registry': ['FormKey','FormTitle','PublicURL','EditURL','ResponseSheet','Active','Notes'],
   'Admin Log': ['Timestamp','Action','Sheet','Key','Details']
 };
@@ -42,10 +43,10 @@ const KEY_FIELD = {
   'Website Videos':'VideoID','Website Shoutouts':'ShoutoutID','Website Picture of the Week':'PictureID','Website Gallery':'PhotoID',
   'Website Tryouts':'TryoutID','Event Rosters':'RosterID','Game Lineups':'LineupRowID','Parent Codes':'PlayerID','Availability':'AvailabilityID',
   'Homework Weeks':'WeekID','Homework Tasks':'TaskID','Homework Questions':'QuestionID','Homework Responses':'ResponseID',
-  'Pending Players':'SubmissionID','Parent Photo Submissions':'SubmissionID','Form Registry':'FormKey'
+  'Pending Players':'SubmissionID','Parent Photo Submissions':'SubmissionID','Player Stats':'StatsID','Form Registry':'FormKey'
 };
 
-const ADMIN_EDITABLE = Object.keys(KEY_FIELD).filter(n => !['Parent Codes','Availability','Homework Responses'].includes(n));
+const ADMIN_EDITABLE = Object.keys(KEY_FIELD).filter(n => !['Parent Codes','Availability','Homework Responses','Player Stats'].includes(n));
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Storm HQ')
@@ -109,7 +110,7 @@ function seedSettings_() {
 
 function seedSampleContent_() {
   if (rows_('Website Players').length === 0) {
-    const vals=[]; for(let i=1;i<=12;i++) vals.push(['NO','NO',`player-${String(i).padStart(2,'0')}`,i,`Player ${i}`,'',['P / INF','OF / INF','C / Utility'][i%3],'R/R','2035',`assets/img/players/player-${String(i).padStart(2,'0')}.svg`,'','Energy, effort, and coachability','Get better every week','','','10','Bring the storm.',50,35,1,50,35,1,i]);
+    const vals=[]; for(let i=1;i<=12;i++) vals.push(['NO','NO',`player-${String(i).padStart(2,'0')}`,i,`Player ${i}`,'',['P / INF','OF / INF','C / Utility'][i%3],'R/R','2035',`assets/img/players/player-${String(i).padStart(2,'0')}.svg`,'','Energy, effort, and coachability','Get better every week','','','10','Bring the storm.',50,35,1,50,35,1,i,'','YES']);
     ensureSheet_('Website Players').getRange(2,1,vals.length,HEADERS['Website Players'].length).setValues(vals);
   }
   if (rows_('Website Announcements').length === 0) saveRowDirect_('Website Announcements',{Show:'NO',Approved:'NO',AnnouncementID:'welcome',Visibility:'PUBLIC',AlertLevel:'Storm Warning',Title:'The Storm Is Building',Message:'Your new Storm HQ is connected: schedule, homework, family information, videos, and game-day tools all live in one system.',PinToHome:'YES',SortOrder:1});
@@ -159,11 +160,24 @@ function publicPayload_() {
     ['PUBLIC','BOTH'].includes(String(a.Visibility||'PUBLIC').toUpperCase())
   );
 
+  data.playerStats = publicPlayerStats_();
+
   const eventById={}; data.calendar.forEach(e=>eventById[String(e.EventID)]=e);
   data.eventRosters=rows_('Event Rosters').filter(r => String(r.Assigned||'YES').toUpperCase()==='YES' && eventById[String(r.EventID)] && String(eventById[String(r.EventID)].RosterVisibility||'FAMILY').toUpperCase()==='PUBLIC').map(serializeRecord_);
   return data;
 }
 function publicRows_(name){ return rows_(name).filter(r => String(r.Show||'YES').toUpperCase()==='YES' && String(r.Approved||'YES').toUpperCase()==='YES').map(serializeRecord_).sort((a,b)=>(Number(a.SortOrder)||999)-(Number(b.SortOrder)||999)); }
+function publicPlayerStats_(){
+  const players=publicRows_('Website Players');
+  const byId={};
+  players.forEach(p=>{ if(String(p.ShowStats||'YES').toUpperCase()!=='NO') byId[String(p.PlayerID)]=p; });
+  return rows_('Player Stats').filter(r=>byId[String(r.PlayerID)]).map(r=>{
+    const o=serializeRecord_(r);
+    delete o.RawJSON; delete o.Last; delete o.First; delete o.Number;
+    o.GameChangerURL=byId[String(r.PlayerID)].GameChangerURL||'';
+    return o;
+  });
+}
 function getSettings_(){ const o={}; rows_('Website Settings').forEach(r=>o[String(r.Key)]=serializeValue_('Value',r.Value)); return o; }
 
 function rows_(name) {
@@ -196,6 +210,150 @@ function saveRowDirect_(sheetName,record) {
   sh.getRange(rowNum,1,1,headers.length).setValues([headers.map(h=>merged[h]===undefined?'':merged[h])]); return merged;
 }
 function adminDeleteRow(token,sheetName,keyValue){ requireAdmin_(token); if(!ADMIN_EDITABLE.includes(sheetName))throw new Error('Not allowed.'); const key=KEY_FIELD[sheetName],sh=ensureSheet_(sheetName),data=rows_(sheetName); let row=0;data.some((r,i)=>{if(String(r[key])===String(keyValue)){row=i+2;return true;}return false;});if(row)sh.deleteRow(row);logAdmin_('DELETE',sheetName,String(keyValue),'Coach Control Center');return {ok:true}; }
+
+
+function adminImportGameChangerCsv(token,csvText){
+  requireAdmin_(token);
+  const parsed=parseGameChangerCsv_(csvText);
+  const players=rows_('Website Players');
+  const matched=[], unmatched=[];
+
+  parsed.players.forEach(gc=>{
+    const m=matchGameChangerPlayer_(gc,players);
+    if(!m){
+      unmatched.push({number:gc.Number||'',first:gc.First||'',last:gc.Last||''});
+      return;
+    }
+    const s=gc.stats||{};
+    const rec={
+      StatsID:'stats-'+String(m.player.PlayerID),
+      PlayerID:String(m.player.PlayerID),
+      Number:gc.Number||'',
+      Last:gc.Last||'',
+      First:gc.First||'',
+      UpdatedAt:new Date(),
+      Source:'GameChanger CSV',
+      Bat_GP:gcStat_(s,'Batting_GP'),Bat_PA:gcStat_(s,'Batting_PA'),Bat_AB:gcStat_(s,'Batting_AB'),
+      Bat_AVG:gcStat_(s,'Batting_AVG'),Bat_OBP:gcStat_(s,'Batting_OBP'),Bat_OPS:gcStat_(s,'Batting_OPS'),
+      Bat_SLG:gcStat_(s,'Batting_SLG'),Bat_H:gcStat_(s,'Batting_H'),Bat_2B:gcStat_(s,'Batting_2B'),
+      Bat_3B:gcStat_(s,'Batting_3B'),Bat_HR:gcStat_(s,'Batting_HR'),Bat_RBI:gcStat_(s,'Batting_RBI'),
+      Bat_R:gcStat_(s,'Batting_R'),Bat_BB:gcStat_(s,'Batting_BB'),Bat_SO:gcStat_(s,'Batting_SO'),
+      Bat_SB:gcStat_(s,'Batting_SB'),
+      Pit_IP:gcStat_(s,'Pitching_IP'),Pit_GP:gcStat_(s,'Pitching_GP'),Pit_GS:gcStat_(s,'Pitching_GS'),
+      Pit_W:gcStat_(s,'Pitching_W'),Pit_L:gcStat_(s,'Pitching_L'),Pit_ERA:gcStat_(s,'Pitching_ERA'),
+      Pit_WHIP:gcStat_(s,'Pitching_WHIP'),Pit_SO:gcStat_(s,'Pitching_SO'),Pit_BB:gcStat_(s,'Pitching_BB'),
+      Pit_H:gcStat_(s,'Pitching_H'),Pit_ER:gcStat_(s,'Pitching_ER'),
+      Fld_TC:gcStat_(s,'Fielding_TC'),Fld_A:gcStat_(s,'Fielding_A'),Fld_PO:gcStat_(s,'Fielding_PO'),
+      Fld_FPCT:gcStat_(s,'Fielding_FPCT'),Fld_E:gcStat_(s,'Fielding_E'),
+      RawJSON:JSON.stringify(s)
+    };
+    saveRowDirect_('Player Stats',rec);
+    matched.push({playerID:String(m.player.PlayerID),playerName:m.player.FirstName||gc.First||'',number:gc.Number||'',method:m.method});
+  });
+
+  logAdmin_('GAMECHANGER_IMPORT','Player Stats','',`Rows ${parsed.players.length}; matched ${matched.length}; unmatched ${unmatched.length}`);
+  return {
+    ok:true,
+    totalRows:parsed.players.length,
+    matched:matched.length,
+    unmatched:unmatched.length,
+    matches:matched,
+    unmatchedPlayers:unmatched,
+    sections:parsed.sections
+  };
+}
+
+function parseGameChangerCsv_(csvText){
+  const raw=String(csvText||'').replace(/^\uFEFF/,'');
+  if(!raw.trim())throw new Error('Choose a GameChanger stats CSV first.');
+  const rows=Utilities.parseCsv(raw);
+  if(!rows.length)throw new Error('The GameChanger CSV is empty.');
+
+  let h=-1;
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i]||[];
+    if(String(r[0]||'').trim().toLowerCase()==='number' &&
+       String(r[1]||'').trim().toLowerCase()==='last' &&
+       String(r[2]||'').trim().toLowerCase()==='first'){ h=i; break; }
+  }
+  if(h<0)throw new Error('Storm HQ could not find the GameChanger Number / Last / First header row.');
+
+  const headers=rows[h]||[];
+  const sectionRow=h>0?(rows[h-1]||[]):[];
+  const keys=[], sectionCounts={};
+  let section='';
+  for(let i=0;i<headers.length;i++){
+    const marker=String(sectionRow[i]||'').trim();
+    if(marker)section=marker;
+    const header=String(headers[i]||'').trim();
+    if(i<3){ keys[i]=header; continue; }
+    const sec=section||'Stats';
+    keys[i]=sec+'_'+header;
+    sectionCounts[sec]=(sectionCounts[sec]||0)+1;
+  }
+
+  const out=[];
+  for(let r=h+1;r<rows.length;r++){
+    const row=rows[r]||[];
+    const number=String(row[0]||'').trim();
+    const last=String(row[1]||'').trim();
+    const first=String(row[2]||'').trim();
+    if(!number&&!last&&!first)continue;
+    if(number.toLowerCase()==='glossary')continue;
+
+    const stats={};
+    for(let i=3;i<headers.length;i++){
+      const key=keys[i];
+      if(!key)continue;
+      const value=row[i]===undefined?'':String(row[i]).trim();
+      if(value!=='')stats[key]=value;
+    }
+    out.push({Number:number,Last:last,First:first,stats:stats});
+  }
+  return {players:out,sections:sectionCounts};
+}
+
+function matchGameChangerPlayer_(gc,players){
+  const first=gcNormName_(gc.First), lastInitial=gcNormName_(gc.Last).charAt(0), jersey=gcNormJersey_(gc.Number);
+  const sameFirst=players.filter(p=>gcNormName_(p.FirstName)===first);
+  const sameFirstLast=sameFirst.filter(p=>!lastInitial||gcNormName_(p.LastInitial).charAt(0)===lastInitial);
+
+  let c=sameFirstLast.filter(p=>jersey&&gcNormJersey_(p.Jersey)===jersey);
+  if(c.length===1)return {player:c[0],method:'name + jersey'};
+
+  if(sameFirstLast.length===1)return {player:sameFirstLast[0],method:'name'};
+
+  c=players.filter(p=>jersey&&gcNormJersey_(p.Jersey)===jersey);
+  if(c.length===1 && (!first||gcNormName_(c[0].FirstName)===first))return {player:c[0],method:'jersey'};
+
+  if(sameFirst.length===1)return {player:sameFirst[0],method:'first name'};
+  return null;
+}
+function gcNormName_(v){ return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+function gcNormJersey_(v){ return String(v||'').toLowerCase().replace(/^#/,'').replace(/[^a-z0-9]/g,''); }
+function gcStat_(stats,key){ return Object.prototype.hasOwnProperty.call(stats,key)?stats[key]:''; }
+
+function adminUploadVideo(token,videoData,fileName,mimeType){
+  requireAdmin_(token);
+  const raw=String(videoData||'');
+  if(!raw)throw new Error('Choose a video first.');
+  const detected=(raw.match(/^data:([^;]+);base64,/)||[])[1]||mimeType||'';
+  if(detected && !/^video\//i.test(detected))throw new Error('Please choose a video file.');
+  const clean=raw.replace(/^data:[^;]+;base64,/,'').replace(/ /g,'+');
+  const bytes=Utilities.base64Decode(clean);
+  const MAX_BYTES=20*1024*1024;
+  if(bytes.length>MAX_BYTES)throw new Error('This clip is too large for direct Storm HQ upload. Use a GameChanger, YouTube, Vimeo, or Google Drive link for larger video.');
+  const blob=Utilities.newBlob(bytes,detected||mimeType||'video/mp4',fileName||'storm-video.mp4');
+  const file=ensureDriveFolder_('Storm HQ - Videos').createFile(blob);
+  try{file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);}catch(e){}
+  return {
+    ok:true,
+    fileId:file.getId(),
+    url:'https://drive.google.com/file/d/'+encodeURIComponent(file.getId())+'/view?usp=sharing',
+    previewUrl:'https://drive.google.com/file/d/'+encodeURIComponent(file.getId())+'/preview',
+    fileName:file.getName()
+  };
+}
 
 function adminUploadImage(token,imageData,fileName,mimeType,purpose){ requireAdmin_(token); const folders={'player':'Storm HQ - Player Photos','team':'Storm HQ - Team Photos','logo':'Storm HQ - Brand Assets','homework':'Storm HQ - Homework Media'}; const folder=folders[purpose]||folders.team; return {ok:true,url:saveBase64File_(imageData,fileName||'storm-photo.jpg',mimeType||'image/jpeg',folder)}; }
 function saveBase64File_(data,fileName,mimeType,folderName){
