@@ -314,6 +314,88 @@ function saveLineupPlan(token,eventId,plan,planLabel,useWhen,lineRows){ requireA
 function adminApprovePending(token,submissionId,overrides){ requireAdmin_(token); const pending=rows_('Pending Players').find(r=>String(r.SubmissionID)===String(submissionId));if(!pending)throw new Error('Pending player not found.');const o=overrides||{},pid=o.PlayerID||pending.PlayerID||('player-'+Utilities.getUuid().slice(0,6));const rec={Show:'YES',Approved:'YES',PlayerID:pid,Jersey:o.Jersey||pending.Jersey||'',FirstName:o.FirstName||pending.FirstName||'Player',LastInitial:o.LastInitial||pending.LastInitial||'',Positions:o.Positions||pending.Positions||'',BatsThrows:o.BatsThrows||pending.BatsThrows||'',ClassYear:o.ClassYear||pending.ClassYear||'',PhotoURL:o.PhotoURL||'',BackgroundURL:o.BackgroundURL||'',StrongestPart:o.StrongestPart||pending.StrongestPart||'',SeasonGoal:o.SeasonGoal||pending.SeasonGoal||'',FavoriteColor:o.FavoriteColor||pending.FavoriteColor||'',FavoritePlayer:o.FavoritePlayer||pending.FavoritePlayer||'',Excitement:o.Excitement||pending.Excitement||'',Quote:o.Quote||pending.Quote||'',CardX:50,CardY:35,CardZoom:1,ProfileX:50,ProfileY:35,ProfileZoom:1,SortOrder:o.SortOrder||99};saveRowDirect_('Website Players',rec);const psh=ensureSheet_('Pending Players'),ph=HEADERS['Pending Players'],pdata=rows_('Pending Players');let row=0;pdata.some((r,i)=>{if(String(r.SubmissionID)===String(submissionId)){row=i+2;return true;}return false;});if(row)psh.getRange(row,ph.indexOf('Status')+1).setValue('APPROVED');generateMissingParentCodes_();return {ok:true,player:rec}; }
 function adminRejectPending(token,submissionId,notes){ requireAdmin_(token); const sh=ensureSheet_('Pending Players'),h=HEADERS['Pending Players'],data=rows_('Pending Players');let row=0;data.some((r,i)=>{if(String(r.SubmissionID)===String(submissionId)){row=i+2;return true;}return false;});if(row){sh.getRange(row,h.indexOf('Status')+1).setValue('REJECTED');sh.getRange(row,h.indexOf('CoachNotes')+1).setValue(notes||'');}return {ok:true}; }
 
+function adminApproveFamilyPhoto(token,submissionId,destination){
+  requireAdmin_(token);
+
+  const photos=rows_('Parent Photo Submissions');
+  const pending=photos.find(r=>String(r.SubmissionID)===String(submissionId));
+  if(!pending) throw new Error('Family photo submission not found.');
+
+  const dest=String(destination||'GALLERY').toUpperCase();
+  if(!pending.ImageURL) throw new Error('This family photo has no image URL.');
+
+  let published;
+
+  if(dest==='PICTURE'){
+    published=saveRowDirect_('Website Picture of the Week',{
+      Show:'YES',
+      Approved:'YES',
+      PictureID:'picture-'+Utilities.getUuid().slice(0,8),
+      Title:pending.Title||'Family Photo',
+      Week:Utilities.formatDate(new Date(),TZ,'MMM d, yyyy'),
+      Caption:pending.Caption||'',
+      ImageURL:pending.ImageURL,
+      SubmittedBy:pending.ParentName||pending.PlayerName||'Storm Family'
+    });
+  }else{
+    published=saveRowDirect_('Website Gallery',{
+      Show:'YES',
+      Approved:'YES',
+      PhotoID:'photo-'+Utilities.getUuid().slice(0,8),
+      Title:pending.Title||'Family Photo',
+      Caption:pending.Caption||'',
+      ImageURL:pending.ImageURL,
+      Date:pending.SubmittedAt||new Date(),
+      PlayerID:pending.PlayerID||'',
+      Category:'Family Submission',
+      SortOrder:99
+    });
+  }
+
+  const sh=ensureSheet_('Parent Photo Submissions');
+  const h=HEADERS['Parent Photo Submissions'];
+  let row=0;
+  photos.some((r,i)=>{
+    if(String(r.SubmissionID)===String(submissionId)){
+      row=i+2;
+      return true;
+    }
+    return false;
+  });
+
+  if(row){
+    sh.getRange(row,h.indexOf('Status')+1).setValue(dest==='PICTURE'?'APPROVED_PICTURE':'APPROVED_GALLERY');
+    sh.getRange(row,h.indexOf('CoachNotes')+1).setValue(dest==='PICTURE'?'Published as Picture of the Week':'Published to Storm Gallery');
+  }
+
+  logAdmin_('APPROVE_FAMILY_PHOTO','Parent Photo Submissions',String(submissionId),dest);
+  return {ok:true,destination:dest,record:serializeRecord_(published)};
+}
+
+function adminRejectFamilyPhoto(token,submissionId,notes){
+  requireAdmin_(token);
+
+  const sh=ensureSheet_('Parent Photo Submissions');
+  const h=HEADERS['Parent Photo Submissions'];
+  const data=rows_('Parent Photo Submissions');
+  let row=0;
+
+  data.some((r,i)=>{
+    if(String(r.SubmissionID)===String(submissionId)){
+      row=i+2;
+      return true;
+    }
+    return false;
+  });
+
+  if(!row) throw new Error('Family photo submission not found.');
+
+  sh.getRange(row,h.indexOf('Status')+1).setValue('REJECTED');
+  sh.getRange(row,h.indexOf('CoachNotes')+1).setValue(notes||'');
+  logAdmin_('REJECT_FAMILY_PHOTO','Parent Photo Submissions',String(submissionId),notes||'');
+  return {ok:true};
+}
+
 function createStormFormSuite(){ const result=createStormFormSuite_(); SpreadsheetApp.getUi().alert(`Storm forms ready. ${result.created} new form(s) created. Review Form Registry and Website Settings.`); }
 function createStormFormSuite_(){ ensureSheet_('Form Registry');let created=0;const team=getSettings_().teamName||'2 Out Storm 10U';const forms=[
   {key:'PLAYER_INTEREST',title:`${team} Player Interest`,setting:'interest',build:f=>{f.setDescription(`Tell us about your athlete and your interest in ${team}.`);f.addTextItem().setTitle('Player name').setRequired(true);f.addTextItem().setTitle('Birth year').setRequired(true);f.addTextItem().setTitle('Primary positions');f.addTextItem().setTitle('Parent name').setRequired(true);f.addTextItem().setTitle('Parent email').setRequired(true);f.addTextItem().setTitle('Parent phone').setRequired(true);f.addParagraphTextItem().setTitle('Tell us about your athlete and what you are looking for in a team.');}},
