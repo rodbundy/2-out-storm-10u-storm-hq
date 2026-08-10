@@ -38,8 +38,62 @@ const SCHEMAS={
 };
 const KEYS={'Website Calendar':'EventID','Website Announcements':'AnnouncementID','Website Tryouts':'TryoutID','Website Videos':'VideoID','Website Shoutouts':'ShoutoutID','Website Gallery':'PhotoID','Website Picture of the Week':'PictureID','Homework Weeks':'WeekID','Homework Tasks':'TaskID','Homework Questions':'QuestionID'};
 function fieldHtml(name,type,opts,val){const v=val??'';if(type==='select')return `<div class="field"><label>${esc(name)}</label><select name="${name}">${opts.map(o=>`<option ${String(o)===String(v)?'selected':''}>${esc(o)}</option>`).join('')}</select></div>`;if(type==='textarea')return `<div class="field full"><label>${esc(name)}</label><textarea name="${name}">${esc(v)}</textarea></div>`;return `<div class="field"><label>${esc(name)}</label><input type="${type}" name="${name}" value="${esc(v)}"></div>`}
-function openGeneric(sheet,keyValue,defaults={}){const key=KEYS[sheet],rec=table(sheet).find(r=>String(r[key])===String(keyValue))||defaults;const body=`<form id="generic-form"><div class="form-grid">${SCHEMAS[sheet].map(f=>fieldHtml(f[0],f[1],f[2]||[],rec[f[0]])).join('')}</div><div class="button-row" style="margin-top:16px"><button type="button" class="btn primary" onclick="saveGeneric('${sheet}','${esc(rec[key]||'')}')">Save</button>${rec[key]?`<button type="button" class="btn bad" onclick="deleteGeneric('${sheet}','${esc(rec[key])}')">Delete</button>`:''}</div></form>`;openModal(rec[key]?'Edit':'Add',body,sheet.replace('Website ','').replace('Homework ', 'Homework '));}
+function openGeneric(sheet,keyValue,defaults={}){
+  const key=KEYS[sheet],rec=table(sheet).find(r=>String(r[key])===String(keyValue))||defaults;
+  const photoSheet=['Website Gallery','Website Picture of the Week'].includes(sheet);
+  const mediaUpload=photoSheet?`
+    <div class="field full" style="margin-top:14px">
+      <label>Upload Photo</label>
+      <input id="generic-media-file" type="file" accept="image/*">
+      <div class="button-row" style="margin-top:10px">
+        <button type="button" class="btn orange" onclick="uploadGenericMediaPhoto()">Upload Photo</button>
+      </div>
+      <small id="generic-media-status" style="display:block;margin-top:8px;color:var(--muted)">Choose a photo, then click Upload Photo. Storm HQ will fill the ImageURL automatically.</small>
+      <div style="margin-top:12px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0b0810;min-height:140px;display:grid;place-items:center">
+        <img id="generic-media-preview" src="${esc(rec.ImageURL||'')}" alt="Media photo preview" style="display:${rec.ImageURL?'block':'none'};width:100%;max-height:320px;object-fit:cover">
+      </div>
+    </div>`:'';
+  const body=`<form id="generic-form"><div class="form-grid">${SCHEMAS[sheet].map(f=>fieldHtml(f[0],f[1],f[2]||[],rec[f[0]])).join('')}</div>${mediaUpload}<div class="button-row" style="margin-top:16px"><button type="button" class="btn primary" onclick="saveGeneric('${sheet}','${esc(rec[key]||'')}')">Save</button>${rec[key]?`<button type="button" class="btn bad" onclick="deleteGeneric('${sheet}','${esc(rec[key])}')">Delete</button>`:''}</div></form>`;
+  openModal(rec[key]?'Edit':'Add',body,sheet.replace('Website ','').replace('Homework ', 'Homework '));
+}
 async function saveGeneric(sheet,keyValue){const fd=new FormData(qs('#generic-form')),o={};fd.forEach((v,k)=>o[k]=v);if(keyValue)o[KEYS[sheet]]=keyValue;try{await run('adminSaveRow',TOKEN,sheet,o);closeModal();await refreshAll();}catch(e){alert(e.message)}}
+async function uploadGenericMediaPhoto(){
+  const input=qs('#generic-media-file');
+  const status=qs('#generic-media-status');
+  const preview=qs('#generic-media-preview');
+  const f=input?.files?.[0];
+
+  if(!f){
+    if(status)status.textContent='Choose a photo first.';
+    return;
+  }
+  if(f.size>8*1024*1024){
+    if(status)status.textContent='Please use a photo under 8 MB.';
+    return;
+  }
+
+  try{
+    if(status)status.textContent='Reading photo...';
+    const data=await fileData(f);
+    if(status)status.textContent='Uploading photo to Storm HQ...';
+
+    const r=await run('adminUploadImage',TOKEN,data,f.name,f.type||'image/jpeg','team');
+    if(!r||!r.url)throw new Error('Upload finished but no photo URL was returned.');
+
+    const imageField=qs('#generic-form [name="ImageURL"]');
+    if(!imageField)throw new Error('ImageURL field was not found.');
+    imageField.value=r.url;
+
+    if(preview){
+      preview.src=r.url;
+      preview.style.display='block';
+    }
+    if(status)status.textContent='✓ Photo uploaded. Complete the fields above, then click Save.';
+  }catch(e){
+    if(status)status.textContent='Upload failed: '+e.message;
+    else alert(e.message);
+  }
+}
 async function deleteGeneric(sheet,key){if(!confirm('Delete this item?'))return;try{await run('adminDeleteRow',TOKEN,sheet,key);closeModal();await refreshAll();}catch(e){alert(e.message)}}
 function renderTable(sheet,cols,addLabel){const key=KEYS[sheet],rows=table(sheet);return `<div class="toolbar"><button class="btn primary" onclick="openGeneric('${sheet}','')">+ ${addLabel}</button></div><div class="table-wrap"><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}<th></th></tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${['Show','Approved','Status','Visibility'].includes(c)?pill(r[c]):esc(r[c]??'')}</td>`).join('')}<td><button class="btn small" onclick="openGeneric('${sheet}','${esc(r[key])}')">Edit</button></td></tr>`).join('')||`<tr><td colspan="${cols.length+1}">No records yet.</td></tr>`}</tbody></table></div>`}
 function renderSchedule(){qs('#view').innerHTML=pageHead('Storm Tracker','Schedule & Games','Add a practice or game once. It automatically becomes available to the rest of Storm HQ.',`<button class="btn primary" onclick="openGeneric('Website Calendar','')">+ Add Event</button>`)+helpBox('Use plain times like <b>6:00 PM</b>. For games, add opponent, arrival time, uniform, and event notes. View Details and the countdown use this same record.')+renderTable('Website Calendar',['Date','Time','Type','Title','Opponent','Location','Field','Status'],'Add Event')}
@@ -61,7 +115,7 @@ function renderRosters(){const events=table('Website Calendar').filter(e=>String
 async function saveRoster(){const ids=qsa('[data-roster-player]:checked').map(x=>x.value);try{await run('adminSaveEventRoster',TOKEN,window.ROSTER_EVENT,qs('#roster-group').value,ids,qs('#roster-notes').value);await refreshAll();}catch(e){alert(e.message)}}
 function renderGameDay(){const games=table('Website Calendar').filter(e=>String(e.Type).toLowerCase()==='game'||String(e.Type).toLowerCase()==='tournament');qs('#view').innerHTML=pageHead('Game Day','Game Day Builder','Create Starting Order plus two alternate batting plans, defensive positions by inning, and printable/exportable coach sheets.')+helpBox('Choose a game below. The builder opens securely in a separate Storm HQ page. Print / Save PDF uses a clean landscape lineup sheet.')+`<div class="grid two">${games.map(e=>`<div class="card"><span class="kicker">${esc(e.Date)} · ${esc(e.Time)}</span><h3>${esc(e.Title||'Game')} ${e.Opponent?'vs. '+esc(e.Opponent):''}</h3><p style="color:var(--muted)">${esc(e.Location||'')} ${e.Field?'· '+esc(e.Field):''}</p><a class="btn primary" target="_blank" href="${APP_URL}?page=lineup&eventId=${encodeURIComponent(e.EventID)}">Build Lineup</a></div>`).join('')||'<div class="card">Add a Game in Schedule first.</div>'}</div>`}
 
-function renderMedia(){qs('#view').innerHTML=pageHead('Storm Channel','Media & Reports','Manage videos, shoutouts, gallery photos, and Picture of the Week.')+helpBox('YouTube: paste just the video ID or full link information as needed. For photos, upload through Players/Family Portal or paste a public Drive image URL. Public media requires Show = YES and Approved = YES.')+`<div class="grid two"><div class="card"><span class="kicker">Storm Channel</span><h3>Videos</h3>${renderMini('Website Videos',['Category','Title','Featured'])}</div><div class="card"><span class="kicker">Storm Reports</span><h3>Shoutouts</h3>${renderMini('Website Shoutouts',['Category','Title','Player'])}</div><div class="card"><span class="kicker">Storm Gallery</span><h3>Photos</h3>${renderMini('Website Gallery',['Title','Date','Category'])}</div><div class="card"><span class="kicker">Picture of the Week</span><h3>Featured Photo</h3>${renderMini('Website Picture of the Week',['Title','Week','SubmittedBy'])}</div></div>`}
+function renderMedia(){qs('#view').innerHTML=pageHead('Storm Channel','Media & Reports','Manage videos, shoutouts, gallery photos, and Picture of the Week.')+helpBox('YouTube: paste just the video ID or full link information as needed. Gallery and Picture of the Week now include direct coach photo upload. Public media requires Show = YES and Approved = YES.')+`<div class="grid two"><div class="card"><span class="kicker">Storm Channel</span><h3>Videos</h3>${renderMini('Website Videos',['Category','Title','Featured'])}</div><div class="card"><span class="kicker">Storm Reports</span><h3>Shoutouts</h3>${renderMini('Website Shoutouts',['Category','Title','Player'])}</div><div class="card"><span class="kicker">Storm Gallery</span><h3>Photos</h3>${renderMini('Website Gallery',['Title','Date','Category'])}</div><div class="card"><span class="kicker">Picture of the Week</span><h3>Featured Photo</h3>${renderMini('Website Picture of the Week',['Title','Week','SubmittedBy'])}</div></div>`}
 function renderMini(sheet,cols){const key=KEYS[sheet],rows=table(sheet);return `<button class="btn small primary" onclick="openGeneric('${sheet}','')">+ Add</button><div class="list-stack" style="margin-top:10px">${rows.slice(0,8).map(r=>`<div class="list-item" onclick="openGeneric('${sheet}','${esc(r[key])}')"><b>${esc(r[cols[1]||cols[0]]||r[cols[0]]||'Item')}</b><small>${cols.map(c=>r[c]).filter(Boolean).join(' · ')}</small></div>`).join('')||'<p>No items yet.</p>'}</div>`}
 
 function renderPending(){const pending=table('Pending Players').filter(p=>String(p.Status||'PENDING').toUpperCase()==='PENDING'),photos=table('Parent Photo Submissions').filter(p=>String(p.Status||'PENDING').toUpperCase()==='PENDING');qs('#view').innerHTML=pageHead('Approval Queue','Pending Approvals','Nothing from forms or family photo submissions goes public until you approve it.',`<button class="btn" onclick="importPending()">Import Existing Form Responses</button>`)+helpBox('Accepted Player submissions land here. Review, correct the public fields, then Approve. Approval creates/updates the player and generates a private parent code.')+`<div class="grid two"><div class="card"><span class="kicker">Accepted Players</span><h3>${pending.length} Waiting</h3><div class="list-stack">${pending.map(p=>`<div class="list-item"><b>${esc(p.FirstName||'Player')} ${p.Jersey?'#'+esc(p.Jersey):''}</b><small>${esc(p.Positions||'')} · ${esc(p.ParentName||'')}</small><div class="button-row" style="margin-top:8px"><button class="btn small good" onclick="approvePending('${esc(p.SubmissionID)}')">Review & Approve</button><button class="btn small bad" onclick="rejectPending('${esc(p.SubmissionID)}')">Reject</button></div></div>`).join('')||'<p>No pending players.</p>'}</div></div><div class="card"><span class="kicker">Family Photos</span><h3>${photos.length} Waiting</h3><div class="list-stack">${photos.map(p=>`<div class="list-item"><b>${esc(p.Title||'Family Photo')}</b><small>${esc(p.PlayerName||'')} · ${esc(p.ParentName||'')}</small><a class="btn small" target="_blank" href="${esc(p.ImageURL||'#')}">View</a></div>`).join('')||'<p>No pending photos.</p>'}</div></div></div>`}
