@@ -86,8 +86,36 @@ function eventTypeClass(e){return String(e.Type||'Event').toLowerCase().replace(
 function eventCard(e){const score=(e.ScoreUs!==''&&e.ScoreUs!=null)?`<div class="score"><strong>${esc(e.ScoreUs)}-${esc(e.ScoreThem)}</strong><span>${esc(e.Result||'Final')}</span></div>`:'';return `<article class="event-card ${eventTypeClass(e)}"><div class="event-date"><strong>${esc(dateLabel(e.Date,{month:'short',day:'numeric'}))}</strong><span>${esc(e.Time||'TBD')}</span></div><div class="event-main"><span class="storm-label">${esc(e.Type||'Event')}</span><h3>${esc(e.Title||e.Opponent||'Team Event')}</h3><p>${esc(e.Opponent?`vs. ${e.Opponent} · `:'')}${esc(e.Location||'Location TBD')}${e.Field?` · ${esc(e.Field)}`:''}</p><small>${esc(e.Status||'')} ${e.ArrivalTime?` · Arrive ${esc(e.ArrivalTime)}`:''}</small></div>${score}<a class="button small" href="event-details.html?id=${encodeURIComponent(e.EventID)}">View Details</a></article>`;}
 function tryoutCard(t){const d=daysUntil(t.Date);return `<article class="tryout-card"><div class="tryout-status"><span>${esc(t.Status||'Storm Watch')}</span><strong>${d>=0&&d<100?`${d} DAYS`:'10U'}</strong><small>${esc(t.AgeGroup||settings().ageGroup||'10U')}</small></div><div class="tryout-main"><span class="kicker">${esc(t.Title||'Tryout Opportunity')}</span><h3>${esc(dateLabel(t.Date))} · ${esc(t.Time||'TBD')}</h3><p>${esc(t.Description||'Come compete, learn, and see what the Storm is building.')}</p><div class="tryout-facts"><span class="pill">📍 ${esc(t.Location||'TBD')}</span>${t.PositionsWanted?`<span class="pill">🥎 ${esc(t.PositionsWanted)}</span>`:''}${t.ArrivalTime?`<span class="pill">⏱ Arrive ${esc(t.ArrivalTime)}</span>`:''}${t.WhatToBring?`<span class="pill orange">🎒 ${esc(t.WhatToBring)}</span>`:''}</div></div><div class="tryout-action"><a class="button orange" href="${esc(t.RegistrationURL||settings().interest||'#')}">Register / Interest</a></div></article>`;}
 function announcementCard(a){return `<article class="glass-card"><span class="alert-level">${esc(a.AlertLevel||"Coach's Forecast")}</span><h3>${esc(a.Title||'Team Update')}</h3><p>${esc(a.Message||'')}</p>${a.ButtonURL?`<a class="text-link" href="${esc(a.ButtonURL)}">${esc(a.ButtonText||'More information')} →</a>`:''}</article>`;}
-function videoSource(v){ if(v.YouTubeID)return `https://www.youtube.com/embed/${encodeURIComponent(v.YouTubeID)}`; return v.VideoURL||''; }
-function videoThumb(v){if(v.ThumbnailURL)return v.ThumbnailURL;if(v.YouTubeID)return `https://img.youtube.com/vi/${encodeURIComponent(v.YouTubeID)}/hqdefault.jpg`;return 'assets/img/storm-logo.svg';}
+function youtubeId(v){
+  const candidates=[v?.YouTubeID,v?.VideoURL];
+  for(const raw of candidates){
+    const s=String(raw||'').trim();
+    if(!s)continue;
+    if(/^[A-Za-z0-9_-]{11}$/.test(s))return s;
+    const m=s.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{11})/i);
+    if(m)return m[1];
+    try{
+      const u=new URL(s);
+      const host=u.hostname.replace(/^www\./,'').toLowerCase();
+      if(host==='youtube.com'||host==='m.youtube.com'){
+        const id=u.searchParams.get('v');
+        if(id&&/^[A-Za-z0-9_-]{11}$/.test(id))return id;
+      }
+    }catch(e){}
+  }
+  return '';
+}
+function videoSource(v){
+  const id=youtubeId(v);
+  if(id)return `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;
+  return v.VideoURL||'';
+}
+function videoThumb(v){
+  if(v.ThumbnailURL)return v.ThumbnailURL;
+  const id=youtubeId(v);
+  if(id)return `https://img.youtube.com/vi/${encodeURIComponent(id)}/hqdefault.jpg`;
+  return 'assets/img/storm-logo.svg';
+}
 function videoCard(v,featured=false){const src=videoSource(v);return `<article class="${featured?'featured-video-card':'video-card'}"><a class="video-thumb" href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(videoThumb(v))}" alt="${esc(v.Title)}"><span class="play">▶</span>${featured?'<span class="featured-ribbon">Featured Broadcast</span>':''}</a><div class="video-copy"><span class="storm-label">${esc(v.Category||'Storm Channel')}</span><h3>${esc(v.Title||'Storm Video')}</h3><p>${esc(v.Description||'')}</p>${src?`<a class="button small" href="${esc(src)}" target="_blank" rel="noopener">Watch</a>`:''}</div></article>`;}
 function applyBrand(){const s=settings();const root=document.documentElement;[['--purple',s.brandPrimary],['--purple2',s.brandSecondary],['--orange',s.brandAccent],['--ink',s.brandDark]].forEach(([k,v])=>{if(v)root.style.setProperty(k,v)});$$('[data-team-name]').forEach(el=>el.textContent=val(s.teamName,'2 Out Storm 10U'));$$('[data-team-short]').forEach(el=>el.textContent=val(s.teamShort,'2 Out'));$$('[data-team-tagline]').forEach(el=>el.textContent=val(s.tagline,'Together. Tougher.'));$$('[data-age-group]').forEach(el=>el.textContent=val(s.ageGroup,'10U'));$$('[data-home-field]').forEach(el=>el.textContent=val(s.homeField,'CAP'));$$('[data-brand-logo]').forEach(el=>el.src=imageUrl(s.logoURL,window.STORM_CONFIG?.fallbackLogo||'assets/img/storm-logo.svg'));$$('[data-hero-copy]').forEach(el=>el.textContent=val(s.heroCopy,el.textContent));$$('[data-hero-image]').forEach(el=>{const u=s.heroImageURL||s.homeHeroImageURL||s.featureImageURL||'';if(u)el.src=u;});$$('[data-year]').forEach(el=>el.textContent=new Date().getFullYear());document.title=document.title.replace('2 Out Storm 10U',val(s.teamName,'2 Out Storm 10U'));}
 function wireLinks(){$$('[data-app-link]').forEach(a=>{const page=a.dataset.appLink;a.href=StormAPI.appUrl(page);if(!StormAPI.hasApi()){a.classList.add('needs-setup');a.addEventListener('click',e=>{e.preventDefault();alert('Website backend connection needed. Paste the deployed Apps Script /exec URL into assets/js/config.js.');});}});$$('[data-form]').forEach(a=>{const u=settings()[a.dataset.form];if(u&&u!=='#')a.href=u;else{a.href='#';a.addEventListener('click',e=>{e.preventDefault();alert('This form link has not been configured yet. The coach can create/repair forms in the Coach Control Center.');});}});$$('[data-sms]').forEach(a=>{const phone=(settings().phone||'').replace(/[^+\d]/g,'');if(phone)a.href=`sms:${phone}?body=${encodeURIComponent(a.dataset.sms||'Hi Coach')}`;});$('.nav-toggle')?.addEventListener('click',e=>{const nav=$('.nav-links');const open=nav.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(open));});const key=document.body.dataset.page;const navKey={player:'team',event:'tracker',family:'shelter',coach:'shelter',guide:'shelter'}[key]||key;const current=$(`[data-nav="${navKey}"]`);if(current)current.classList.add('active');}
