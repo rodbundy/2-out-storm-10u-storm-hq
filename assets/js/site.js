@@ -74,9 +74,53 @@ function injectStormEnhancementStyles(){
     .storm-stat-grid span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:3px}
     .storm-stat-grid strong{font-size:20px;color:#fff}
     .storm-stat-card{min-height:100%}
+    .storm-home-calendar{margin-top:22px}
+    .storm-calendar-card{position:relative;overflow:hidden;padding:24px;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(145deg,rgba(37,17,60,.92),rgba(8,6,13,.96));box-shadow:0 24px 70px rgba(0,0,0,.32)}
+    .storm-calendar-card:before{content:"";position:absolute;width:360px;height:360px;right:-160px;top:-180px;border-radius:50%;background:radial-gradient(circle,rgba(142,73,215,.24),transparent 68%);pointer-events:none}
+    .storm-calendar-head{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}
+    .storm-calendar-head h2{margin:3px 0 0;font-size:clamp(28px,4vw,46px)}
+    .storm-calendar-head p{margin:0;color:var(--muted);max-width:520px}
+    .storm-calendar-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .storm-calendar-month{min-width:170px;text-align:center;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    .storm-calendar-btn{appearance:none;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.055);color:#fff;border-radius:999px;padding:9px 13px;font:inherit;font-weight:800;cursor:pointer}
+    .storm-calendar-btn:hover{border-color:var(--orange);transform:translateY(-1px)}
+    .storm-calendar-legend{position:relative;z-index:1;display:flex;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+    .storm-calendar-legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    .storm-calendar-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+    .storm-calendar-legend .practice{background:#9b6cff}
+    .storm-calendar-legend .game{background:var(--orange)}
+    .storm-calendar-legend .tournament{background:#ffd166;box-shadow:0 0 12px rgba(255,209,102,.55)}
+    .storm-calendar-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+    .storm-calendar-dow{padding:8px 4px;text-align:center;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+    .storm-calendar-day{min-height:112px;padding:9px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:6px}
+    .storm-calendar-day.is-empty{opacity:.25;background:transparent}
+    .storm-calendar-day.is-today{border-color:rgba(255,107,37,.7);box-shadow:inset 0 0 0 1px rgba(255,107,37,.24)}
+    .storm-calendar-day-number{font-weight:900;font-size:13px;color:#fff}
+    .storm-calendar-events{display:grid;gap:5px}
+    .storm-calendar-event{display:block;padding:6px 7px;border-radius:9px;text-decoration:none;color:#fff;font-size:10px;line-height:1.2;font-weight:800;border:1px solid transparent;overflow:hidden}
+    .storm-calendar-event strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .storm-calendar-event small{display:block;margin-top:2px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .storm-calendar-event.practice{background:rgba(155,108,255,.18);border-color:rgba(155,108,255,.46)}
+    .storm-calendar-event.game{background:rgba(255,107,37,.17);border-color:rgba(255,107,37,.48)}
+    .storm-calendar-event.tournament{background:rgba(255,209,102,.14);border-color:rgba(255,209,102,.5);color:#fff7d0}
+    .storm-calendar-event.cancelled{text-decoration:line-through;opacity:.55;filter:saturate(.35)}
+    .storm-calendar-more{font-size:10px;color:var(--muted);font-weight:800;padding-left:2px}
+    @media(max-width:800px){
+      .storm-calendar-head{align-items:flex-start;flex-direction:column}
+      .storm-calendar-controls{justify-content:flex-start}
+      .storm-calendar-grid{gap:4px}
+      .storm-calendar-day{min-height:82px;padding:6px;border-radius:11px}
+      .storm-calendar-event{padding:5px;font-size:9px}
+      .storm-calendar-event small{display:none}
+    }
     @media(max-width:700px){
       .player-card-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
       .storm-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .storm-calendar-card{padding:16px 10px}
+      .storm-calendar-dow{font-size:8px;letter-spacing:.06em}
+      .storm-calendar-day{min-height:68px}
+      .storm-calendar-event{font-size:8px}
+      .storm-calendar-month{min-width:auto}
     }
   `;
   document.head.appendChild(st);
@@ -122,7 +166,127 @@ function wireLinks(){$$('[data-app-link]').forEach(a=>{const page=a.dataset.appL
 function upcoming(){const now=new Date();return arr('calendar').filter(e=>{const d=eventDateTime(e);return d&&d.getTime()>=now.getTime()-3600000;}).sort((a,b)=>eventDateTime(a)-eventDateTime(b));}
 let timer;
 function renderCountdown(e){const box=$('#countdown');if(!box)return;clearInterval(timer);function tick(){const d=eventDateTime(e),diff=Math.max(0,d-new Date()),days=Math.floor(diff/86400000),hrs=Math.floor(diff%86400000/3600000),mins=Math.floor(diff%3600000/60000),secs=Math.floor(diff%60000/1000);box.innerHTML=[[days,'Days'],[hrs,'Hours'],[mins,'Minutes'],[secs,'Seconds']].map(x=>`<div><strong>${String(x[0]).padStart(2,'0')}</strong><span>${x[1]}</span></div>`).join('');}tick();timer=setInterval(tick,1000);}
-function renderHome(){const next=upcoming()[0];const n=$('#next-impact');if(n){n.innerHTML=next?`<div class="impact-date"><strong>${esc(dateLabel(next.Date,{month:'short',day:'numeric'}))}</strong><span>${esc(next.Time||'TBD')}</span></div><div class="impact-main"><span class="kicker">${esc(next.Status||'Next Impact')}</span><h3>${esc(next.Title||next.Type)}</h3><p>${esc(next.Opponent?`vs. ${next.Opponent} · `:'')}${esc(next.Location||'Location TBD')}${next.Field?` · ${esc(next.Field)}`:''}</p><div class="impact-meta">${next.ArrivalTime?`<span class="pill">Arrive ${esc(next.ArrivalTime)}</span>`:''}${next.Uniform?`<span class="pill">${esc(next.Uniform)}</span>`:''}<span class="pill orange">${esc(next.Type||'Event')}</span></div></div><a class="button primary" href="event-details.html?id=${encodeURIComponent(next.EventID)}">View Details</a>`:'<div class="empty-state">No upcoming events are published yet.</div>';if(next)renderCountdown(next);}const announcements=arr('announcements').filter(a=>String(a.Visibility||'PUBLIC').toUpperCase()!=='FAMILY').slice(0,3);if($('#announcements'))$('#announcements').innerHTML=announcements.length?announcements.map(announcementCard).join(''):'<div class="empty-state">No current Storm Warnings.</div>';const feat=arr('videos').find(v=>yes(v.Featured))||arr('videos')[0];if($('#featured-video'))$('#featured-video').innerHTML=feat?videoCard(feat,true):'<div class="empty-state">Storm Channel is warming up.</div>';if($('#players-grid'))$('#players-grid').innerHTML=arr('players').slice(0,4).map(playerCard).join('');const t=arr('tryouts').filter(x=>!['CLOSED','COMPLETED','FULL'].includes(String(x.Status||'').toUpperCase())).sort((a,b)=>parseDate(a.Date)-parseDate(b.Date))[0];if($('#home-tryout'))$('#home-tryout').innerHTML=t?tryoutCard(t):'<div class="empty-state">No active tryouts are posted right now. Player Interest remains open.</div>';const w=arr('homeworkWeeks').find(x=>String(x.Status||'').toUpperCase()==='ACTIVE')||arr('homeworkWeeks')[0];if($('#home-homework'))$('#home-homework').innerHTML=w?`<div class="homework-public-card"><span class="kicker">${esc(w.Title)}</span><h3>${esc(w.Theme||'The work continues.')}</h3><p>${esc(w.CoachMessage||'')}</p><div class="impact-meta"><span class="pill">Due ${esc(dateLabel(w.DueDate,{month:'short',day:'numeric'}))}</span><span class="pill orange">Parent code required to submit</span></div><div class="hero-actions"><a class="button primary" href="${StormAPI.appUrl('family')}">Open My Homework</a></div></div>`:'';const pic=arr('picture')[0];if($('#picture-week'))$('#picture-week').innerHTML=pic?`<div class="picture"><img loading="lazy" decoding="async" src="${esc(imageUrl(pic.ImageURL))}" alt="${esc(pic.Title||'Picture of the Week')}"></div><div class="picture-copy"><span class="kicker">${esc(pic.Week||'Storm Season')}</span><h3>${esc(pic.Title||'Picture of the Week')}</h3><p>${esc(pic.Caption||'')}</p></div>`:'<div class="empty-state">Picture of the Week coming soon.</div>';}
+
+let HOME_CALENDAR_CURSOR=null;
+
+function calendarEventKind(e){
+  const t=String(e?.Type||'').toLowerCase();
+  if(t.includes('tournament'))return 'tournament';
+  if(t.includes('game'))return 'game';
+  return 'practice';
+}
+function calendarMonthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function ensureHomeCalendar(){
+  if(document.getElementById('storm-home-calendar'))return document.getElementById('storm-home-calendar');
+  const main=document.querySelector('main');
+  if(!main)return null;
+  const section=document.createElement('section');
+  section.className='section storm-home-calendar';
+  section.id='storm-home-calendar';
+  section.innerHTML=`<div class="shell">
+    <div class="storm-calendar-card">
+      <div class="storm-calendar-head">
+        <div>
+          <span class="eyebrow">Storm Schedule</span>
+          <h2>Team Calendar</h2>
+          <p>Practices, games, and tournaments from the same schedule that powers Storm Tracker and Family Availability.</p>
+        </div>
+        <div class="storm-calendar-controls">
+          <button class="storm-calendar-btn" type="button" data-cal-prev aria-label="Previous month">‹</button>
+          <div class="storm-calendar-month" data-cal-month></div>
+          <button class="storm-calendar-btn" type="button" data-cal-next aria-label="Next month">›</button>
+          <button class="storm-calendar-btn" type="button" data-cal-today>Today</button>
+        </div>
+      </div>
+      <div class="storm-calendar-legend">
+        <span><i class="practice"></i>Practice</span>
+        <span><i class="game"></i>Game</span>
+        <span><i class="tournament"></i>Tournament</span>
+      </div>
+      <div class="storm-calendar-grid" data-cal-grid></div>
+    </div>
+  </div>`;
+
+  // Keep all existing homepage content exactly where it is and place the calendar last.
+  main.appendChild(section);
+
+  section.querySelector('[data-cal-prev]').addEventListener('click',()=>{
+    const d=HOME_CALENDAR_CURSOR||new Date();
+    HOME_CALENDAR_CURSOR=new Date(d.getFullYear(),d.getMonth()-1,1);
+    drawHomeCalendar();
+  });
+  section.querySelector('[data-cal-next]').addEventListener('click',()=>{
+    const d=HOME_CALENDAR_CURSOR||new Date();
+    HOME_CALENDAR_CURSOR=new Date(d.getFullYear(),d.getMonth()+1,1);
+    drawHomeCalendar();
+  });
+  section.querySelector('[data-cal-today]').addEventListener('click',()=>{
+    const n=new Date();
+    HOME_CALENDAR_CURSOR=new Date(n.getFullYear(),n.getMonth(),1);
+    drawHomeCalendar();
+  });
+  return section;
+}
+function drawHomeCalendar(){
+  const section=ensureHomeCalendar();
+  if(!section)return;
+  if(!HOME_CALENDAR_CURSOR){
+    const now=new Date();
+    HOME_CALENDAR_CURSOR=new Date(now.getFullYear(),now.getMonth(),1);
+  }
+  const cursor=HOME_CALENDAR_CURSOR;
+  const year=cursor.getFullYear(),month=cursor.getMonth();
+  const monthStart=new Date(year,month,1);
+  const nextMonth=new Date(year,month+1,1);
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const startOffset=monthStart.getDay();
+  const today=new Date();
+  const events=arr('calendar')
+    .map(e=>({e,d:parseDate(e.Date)}))
+    .filter(x=>x.d && x.d>=monthStart && x.d<nextMonth)
+    .sort((a,b)=>a.d-b.d || eventDateTime(a.e)-eventDateTime(b.e));
+
+  const byDay={};
+  events.forEach(({e,d})=>{
+    const day=d.getDate();
+    (byDay[day]||(byDay[day]=[])).push(e);
+  });
+
+  const monthLabel=section.querySelector('[data-cal-month]');
+  if(monthLabel)monthLabel.textContent=cursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+
+  const cells=[];
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>cells.push(`<div class="storm-calendar-dow">${d}</div>`));
+  for(let i=0;i<startOffset;i++)cells.push('<div class="storm-calendar-day is-empty" aria-hidden="true"></div>');
+
+  for(let day=1;day<=daysInMonth;day++){
+    const list=byDay[day]||[];
+    const isToday=today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===day;
+    const visible=list.slice(0,3).map(e=>{
+      const kind=calendarEventKind(e);
+      const cancelled=/cancel/i.test(String(e.Status||''));
+      const title=e.Opponent&&kind==='game'?`vs. ${e.Opponent}`:(e.Title||e.Type||'Team Event');
+      return `<a class="storm-calendar-event ${kind}${cancelled?' cancelled':''}" href="event-details.html?id=${encodeURIComponent(e.EventID)}" title="${esc(title)}">
+        <strong>${esc(title)}</strong>
+        <small>${esc(e.Time||'TBD')}${e.Field?` · ${esc(e.Field)}`:''}</small>
+      </a>`;
+    }).join('');
+    const more=list.length>3?`<div class="storm-calendar-more">+${list.length-3} more</div>`:'';
+    cells.push(`<div class="storm-calendar-day${isToday?' is-today':''}">
+      <div class="storm-calendar-day-number">${day}</div>
+      <div class="storm-calendar-events">${visible}${more}</div>
+    </div>`);
+  }
+
+  const totalCells=startOffset+daysInMonth;
+  const tail=(7-(totalCells%7))%7;
+  for(let i=0;i<tail;i++)cells.push('<div class="storm-calendar-day is-empty" aria-hidden="true"></div>');
+
+  const grid=section.querySelector('[data-cal-grid]');
+  if(grid)grid.innerHTML=cells.join('');
+}
+
+function renderHome(){const next=upcoming()[0];const n=$('#next-impact');if(n){n.innerHTML=next?`<div class="impact-date"><strong>${esc(dateLabel(next.Date,{month:'short',day:'numeric'}))}</strong><span>${esc(next.Time||'TBD')}</span></div><div class="impact-main"><span class="kicker">${esc(next.Status||'Next Impact')}</span><h3>${esc(next.Title||next.Type)}</h3><p>${esc(next.Opponent?`vs. ${next.Opponent} · `:'')}${esc(next.Location||'Location TBD')}${next.Field?` · ${esc(next.Field)}`:''}</p><div class="impact-meta">${next.ArrivalTime?`<span class="pill">Arrive ${esc(next.ArrivalTime)}</span>`:''}${next.Uniform?`<span class="pill">${esc(next.Uniform)}</span>`:''}<span class="pill orange">${esc(next.Type||'Event')}</span></div></div><a class="button primary" href="event-details.html?id=${encodeURIComponent(next.EventID)}">View Details</a>`:'<div class="empty-state">No upcoming events are published yet.</div>';if(next)renderCountdown(next);}const announcements=arr('announcements').filter(a=>String(a.Visibility||'PUBLIC').toUpperCase()!=='FAMILY').slice(0,3);if($('#announcements'))$('#announcements').innerHTML=announcements.length?announcements.map(announcementCard).join(''):'<div class="empty-state">No current Storm Warnings.</div>';const feat=arr('videos').find(v=>yes(v.Featured))||arr('videos')[0];if($('#featured-video'))$('#featured-video').innerHTML=feat?videoCard(feat,true):'<div class="empty-state">Storm Channel is warming up.</div>';if($('#players-grid'))$('#players-grid').innerHTML=arr('players').slice(0,4).map(playerCard).join('');const t=arr('tryouts').filter(x=>!['CLOSED','COMPLETED','FULL'].includes(String(x.Status||'').toUpperCase())).sort((a,b)=>parseDate(a.Date)-parseDate(b.Date))[0];if($('#home-tryout'))$('#home-tryout').innerHTML=t?tryoutCard(t):'<div class="empty-state">No active tryouts are posted right now. Player Interest remains open.</div>';const w=arr('homeworkWeeks').find(x=>String(x.Status||'').toUpperCase()==='ACTIVE')||arr('homeworkWeeks')[0];if($('#home-homework'))$('#home-homework').innerHTML=w?`<div class="homework-public-card"><span class="kicker">${esc(w.Title)}</span><h3>${esc(w.Theme||'The work continues.')}</h3><p>${esc(w.CoachMessage||'')}</p><div class="impact-meta"><span class="pill">Due ${esc(dateLabel(w.DueDate,{month:'short',day:'numeric'}))}</span><span class="pill orange">Parent code required to submit</span></div><div class="hero-actions"><a class="button primary" href="${StormAPI.appUrl('family')}">Open My Homework</a></div></div>`:'';const pic=arr('picture')[0];if($('#picture-week'))$('#picture-week').innerHTML=pic?`<div class="picture"><img loading="lazy" decoding="async" src="${esc(imageUrl(pic.ImageURL))}" alt="${esc(pic.Title||'Picture of the Week')}"></div><div class="picture-copy"><span class="kicker">${esc(pic.Week||'Storm Season')}</span><h3>${esc(pic.Title||'Picture of the Week')}</h3><p>${esc(pic.Caption||'')}</p></div>`:'<div class="empty-state">Picture of the Week coming soon.</div>';drawHomeCalendar();}
 function renderTeam(){const g=$('#players-grid');if(g)g.innerHTML=arr('players').sort((a,b)=>(+a.SortOrder||99)-(+b.SortOrder||99)).map(playerCard).join('')||'<div class="empty-state">Roster coming soon.</div>';}
 function renderPlayer(){const id=new URLSearchParams(location.search).get('id');const p=arr('players').find(x=>String(x.PlayerID)===String(id))||arr('players')[0];const el=$('#player-profile');if(!p||!el){if(el)el.innerHTML='<div class="empty-state">Player profile not found.</div>';return;}const x=val(p.ProfileX,50),y=val(p.ProfileY,35),z=val(p.ProfileZoom,1);el.innerHTML=`<section class="profile-hero"><div class="profile-photo" style="--px:${x}%;--py:${y}%;--pz:${z}"><img decoding="async" fetchpriority="high" src="${esc(imageUrl(p.BackgroundURL||p.PhotoURL))}" alt="${esc(p.FirstName)}"></div><div class="shell profile-copy"><span class="profile-number">#${esc(p.Jersey)}</span><h1>${esc(p.FirstName)}</h1><p>${esc(p.Positions||'Storm Athlete')} · ${esc(p.BatsThrows||'')}</p></div></section><section class="section"><div class="shell profile-grid"><article class="glass-card"><span class="kicker">Her Role in the Storm</span><h3>${esc(p.Positions||'Athlete')}</h3><p>${esc(p.StrongestPart||'Development in progress.')}</p></article><article class="glass-card"><span class="kicker">Her Forecast</span><h3>Season Goal</h3><p>${esc(p.SeasonGoal||'Get better every week.')}</p></article><article class="glass-card"><span class="kicker">Player Card</span><dl class="profile-facts"><div><dt>Jersey</dt><dd>#${esc(p.Jersey)}</dd></div><div><dt>Positions</dt><dd>${esc(p.Positions||'')}</dd></div><div><dt>Bats / Throws</dt><dd>${esc(p.BatsThrows||'')}</dd></div><div><dt>Class</dt><dd>${esc(p.ClassYear||'')}</dd></div></dl></article><article class="glass-card"><span class="kicker">Storm Mindset</span><h3>“${esc(p.Quote||'Together. Tougher.')}”</h3></article></div></section>${playerStatsSection(p)}${playerHighlightsSection(p)}`;}
 function renderTracker(){const list=$('#events-list'), filters=$('#event-filters');if(!list)return;const data=arr('calendar').sort((a,b)=>eventDateTime(a)-eventDateTime(b));const types=['All',...new Set(data.map(e=>e.Type).filter(Boolean))];if(filters){filters.innerHTML=types.map((t,i)=>`<button class="filter-chip ${i===0?'active':''}" data-filter="${esc(t)}">${esc(t)}</button>`).join('');filters.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;$$('.filter-chip',filters).forEach(x=>x.classList.remove('active'));b.classList.add('active');const f=b.dataset.filter;list.innerHTML=data.filter(x=>f==='All'||x.Type===f).map(eventCard).join('')||'<div class="empty-state">No matching events.</div>';});}list.innerHTML=data.map(eventCard).join('')||'<div class="empty-state">No events published.</div>';}
