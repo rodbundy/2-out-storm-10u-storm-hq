@@ -74,6 +74,49 @@ function injectStormEnhancementStyles(){
     .storm-stat-grid span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:3px}
     .storm-stat-grid strong{font-size:20px;color:#fff}
     .storm-stat-card{min-height:100%}
+    .storm-family-board{margin-top:22px}
+    .storm-board-card{position:relative;overflow:hidden;padding:24px;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(145deg,rgba(19,12,31,.97),rgba(47,20,72,.91));box-shadow:0 24px 70px rgba(0,0,0,.32)}
+    .storm-board-card:after{content:"";position:absolute;width:330px;height:330px;left:-160px;bottom:-190px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,37,.16),transparent 69%);pointer-events:none}
+    .storm-board-head{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:18px}
+    .storm-board-head h2{margin:3px 0 0;font-size:clamp(28px,4vw,46px)}
+    .storm-board-head p{margin:0;color:var(--muted);max-width:560px}
+    .storm-board-login{position:relative;z-index:1;display:grid;grid-template-columns:minmax(180px,1fr) minmax(150px,.55fr) auto;gap:10px;align-items:end;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:18px;background:rgba(255,255,255,.035)}
+    .storm-board-field{display:grid;gap:6px}
+    .storm-board-field label{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--orange)}
+    .storm-board-field select,.storm-board-field input,.storm-board-compose textarea{width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(0,0,0,.26);color:#fff;font:inherit;padding:11px 12px;outline:none}
+    .storm-board-field select:focus,.storm-board-field input:focus,.storm-board-compose textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,37,.12)}
+    .storm-board-status{position:relative;z-index:1;margin-top:10px;min-height:18px;color:var(--muted);font-size:12px}
+    .storm-board-status.error{color:#ff9e9e}
+    .storm-board-status.success{color:#b8f7c7}
+    .storm-board-shell{position:relative;z-index:1;display:none;margin-top:16px}
+    .storm-board-shell.open{display:block}
+    .storm-board-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .storm-board-who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .storm-board-who strong{font-size:14px}
+    .storm-board-live{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:rgba(142,73,215,.14);border:1px solid rgba(142,73,215,.35);font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .storm-board-live:before{content:"";width:7px;height:7px;border-radius:50%;background:#8ff0a4;box-shadow:0 0 10px rgba(143,240,164,.7)}
+    .storm-board-actions{display:flex;gap:7px;flex-wrap:wrap}
+    .storm-board-smallbtn{appearance:none;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.055);color:#fff;border-radius:999px;padding:7px 10px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+    .storm-board-messages{display:grid;gap:9px;max-height:470px;overflow:auto;padding:3px 3px 6px}
+    .storm-board-message{padding:13px 14px;border:1px solid rgba(255,255,255,.1);border-radius:15px;background:rgba(255,255,255,.035)}
+    .storm-board-message.coach{border-color:rgba(255,107,37,.42);background:linear-gradient(120deg,rgba(255,107,37,.10),rgba(255,255,255,.035))}
+    .storm-board-message.pinned{box-shadow:inset 3px 0 0 var(--orange)}
+    .storm-board-message-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:5px}
+    .storm-board-message-head strong{font-size:13px}
+    .storm-board-message-head span{color:var(--muted);font-size:10px;white-space:nowrap}
+    .storm-board-message p{margin:0;color:#f6f3fb;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45}
+    .storm-board-pin{font-size:10px;color:var(--orange);font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-left:7px}
+    .storm-board-empty{padding:22px;text-align:center;border:1px dashed rgba(255,255,255,.14);border-radius:14px;color:var(--muted)}
+    .storm-board-compose{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:end;margin-top:12px}
+    .storm-board-compose textarea{min-height:68px;max-height:150px;resize:vertical}
+    .storm-board-closed{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(255,107,37,.1);border:1px solid rgba(255,107,37,.28);font-size:12px;color:#ffd9c8}
+    @media(max-width:760px){
+      .storm-board-head{align-items:flex-start;flex-direction:column}
+      .storm-board-login{grid-template-columns:1fr}
+      .storm-board-compose{grid-template-columns:1fr}
+      .storm-board-card{padding:18px 12px}
+      .storm-board-messages{max-height:390px}
+    }
     .storm-home-calendar{margin-top:22px}
     .storm-calendar-card{position:relative;overflow:hidden;padding:24px;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(145deg,rgba(37,17,60,.92),rgba(8,6,13,.96));box-shadow:0 24px 70px rgba(0,0,0,.32)}
     .storm-calendar-card:before{content:"";position:absolute;width:360px;height:360px;right:-160px;top:-180px;border-radius:50%;background:radial-gradient(circle,rgba(142,73,215,.24),transparent 68%);pointer-events:none}
@@ -166,6 +209,191 @@ function wireLinks(){$$('[data-app-link]').forEach(a=>{const page=a.dataset.appL
 function upcoming(){const now=new Date();return arr('calendar').filter(e=>{const d=eventDateTime(e);return d&&d.getTime()>=now.getTime()-3600000;}).sort((a,b)=>eventDateTime(a)-eventDateTime(b));}
 let timer;
 function renderCountdown(e){const box=$('#countdown');if(!box)return;clearInterval(timer);function tick(){const d=eventDateTime(e),diff=Math.max(0,d-new Date()),days=Math.floor(diff/86400000),hrs=Math.floor(diff%86400000/3600000),mins=Math.floor(diff%3600000/60000),secs=Math.floor(diff%60000/1000);box.innerHTML=[[days,'Days'],[hrs,'Hours'],[mins,'Minutes'],[secs,'Seconds']].map(x=>`<div><strong>${String(x[0]).padStart(2,'0')}</strong><span>${x[1]}</span></div>`).join('');}tick();timer=setInterval(tick,1000);}
+
+
+// -----------------------------------------------------------------------------
+// STORM FAMILY BOARD
+// Loads NO board messages during normal homepage startup. A parent must choose a
+// player and sign in first; only then are private board messages requested.
+// -----------------------------------------------------------------------------
+const BOARD_SESSION_KEY='stormhq_family_board_session_v1';
+let BOARD_REFRESH_TIMER=null;
+
+function boardApi(action,params){
+  return new Promise((resolve,reject)=>{
+    const cfg=window.STORM_CONFIG||{};
+    const base=String(cfg.apiUrl||'');
+    if(!/^https:\/\/script\.google\.com\/macros\/s\//.test(base) || !/\/exec(?:$|\?)/.test(base)){
+      reject(new Error('Family Board connection is not configured.'));
+      return;
+    }
+    const cb='storm_board_cb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    let done=false;
+    const u=new URL(base);
+    u.searchParams.set('action',action);
+    u.searchParams.set('callback',cb);
+    Object.entries(params||{}).forEach(([k,v])=>{
+      if(v!==undefined&&v!==null&&v!=='')u.searchParams.set(k,String(v));
+    });
+    const finish=(err,data)=>{
+      if(done)return;
+      done=true;
+      clearTimeout(timeout);
+      try{delete window[cb];}catch(e){}
+      script.remove();
+      if(err)reject(err);else if(!data||data.ok===false)reject(new Error(data?.error||'Family Board request failed.'));else resolve(data);
+    };
+    window[cb]=data=>finish(null,data);
+    script.onerror=()=>finish(new Error('Could not reach the Family Board.'));
+    script.src=u.toString();
+    document.head.appendChild(script);
+    const timeout=setTimeout(()=>finish(new Error('Family Board request timed out.')),20000);
+  });
+}
+function boardSavedSession(){
+  try{return JSON.parse(sessionStorage.getItem(BOARD_SESSION_KEY)||'null');}catch(e){return null;}
+}
+function boardSaveSession(s){try{sessionStorage.setItem(BOARD_SESSION_KEY,JSON.stringify(s));}catch(e){}}
+function boardClearSession(){try{sessionStorage.removeItem(BOARD_SESSION_KEY);}catch(e){} clearInterval(BOARD_REFRESH_TIMER);BOARD_REFRESH_TIMER=null;}
+function boardTime(v){
+  if(!v)return '';
+  const d=new Date(String(v));
+  if(isNaN(d))return '';
+  return d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+}
+function ensureFamilyBoard(){
+  if(document.getElementById('storm-family-board'))return document.getElementById('storm-family-board');
+  const main=document.querySelector('main');
+  if(!main)return null;
+  const section=document.createElement('section');
+  section.className='section storm-family-board';
+  section.id='storm-family-board';
+  const players=arr('players').filter(p=>String(p.Jersey||'').trim()!=='');
+  section.innerHTML=`<div class="shell"><div class="storm-board-card">
+    <div class="storm-board-head">
+      <div><span class="eyebrow">Inside the Storm</span><h2>Storm Family Board</h2></div>
+      <p>Quick team updates, questions, and family communication. Select your player and enter your Family Board code.</p>
+    </div>
+    <div class="storm-board-login" data-board-login>
+      <div class="storm-board-field"><label for="storm-board-player">Player</label><select id="storm-board-player" data-board-player><option value="">Choose your player…</option>${players.map(p=>`<option value="${esc(p.PlayerID)}">#${esc(p.Jersey)} ${esc(p.FirstName)}</option>`).join('')}</select></div>
+      <div class="storm-board-field"><label for="storm-board-code">Family Board Code</label><input id="storm-board-code" data-board-code inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="10 + jersey #"></div>
+      <button class="button orange" type="button" data-board-enter>Enter the Board</button>
+    </div>
+    <div class="storm-board-status" data-board-status>Board messages stay private until a family signs in.</div>
+    <div class="storm-board-shell" data-board-shell>
+      <div class="storm-board-toolbar">
+        <div class="storm-board-who"><span class="storm-board-live">Family Board</span><strong data-board-name></strong></div>
+        <div class="storm-board-actions"><button type="button" class="storm-board-smallbtn" data-board-refresh>Refresh</button><button type="button" class="storm-board-smallbtn" data-board-leave>Sign Out</button></div>
+      </div>
+      <div class="storm-board-messages" data-board-messages></div>
+      <div class="storm-board-closed" data-board-closed style="display:none">Coach has temporarily closed parent posting. You can still read team updates.</div>
+      <div class="storm-board-compose" data-board-compose>
+        <textarea maxlength="500" data-board-message placeholder="Message the Storm…"></textarea>
+        <button class="button orange" type="button" data-board-post>Post Message</button>
+      </div>
+    </div>
+  </div></div>`;
+
+  // Board should sit directly above the calendar. If calendar does not exist yet,
+  // append it; the calendar renderer will then append after it.
+  const cal=document.getElementById('storm-home-calendar');
+  if(cal)main.insertBefore(section,cal);else main.appendChild(section);
+
+  const status=section.querySelector('[data-board-status]');
+  const setStatus=(msg,type='')=>{status.textContent=msg||'';status.className='storm-board-status'+(type?' '+type:'');};
+
+  section.querySelector('[data-board-enter]').addEventListener('click',async()=>{
+    const playerId=section.querySelector('[data-board-player]').value;
+    const code=section.querySelector('[data-board-code]').value.trim();
+    if(!playerId||!code){setStatus('Choose your player and enter the Family Board code.','error');return;}
+    setStatus('Entering the Storm…');
+    try{
+      const r=await boardApi('boardLogin',{playerId,code});
+      boardSaveSession({token:r.token,playerId:r.playerId,displayName:r.displayName});
+      section.querySelector('[data-board-code]').value='';
+      boardOpenSession(section,r);
+      setStatus('Family Board connected.','success');
+    }catch(e){setStatus(e.message,'error');}
+  });
+  section.querySelector('[data-board-code]').addEventListener('keydown',e=>{if(e.key==='Enter')section.querySelector('[data-board-enter]').click();});
+  section.querySelector('[data-board-refresh]').addEventListener('click',()=>boardRefresh(section,true));
+  section.querySelector('[data-board-leave]').addEventListener('click',()=>{boardClearSession();section.querySelector('[data-board-shell]').classList.remove('open');section.querySelector('[data-board-login]').style.display='grid';setStatus('Signed out of the Family Board.');});
+  section.querySelector('[data-board-post]').addEventListener('click',()=>boardPost(section));
+  section.querySelector('[data-board-message]').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')boardPost(section);});
+
+  const saved=boardSavedSession();
+  if(saved?.token){
+    section.querySelector('[data-board-login]').style.display='none';
+    setStatus('Restoring your Family Board session…');
+    boardRefresh(section,false).catch(()=>{});
+  }
+  return section;
+}
+function boardRenderMessages(section,messages){
+  const el=section.querySelector('[data-board-messages]');
+  const list=Array.isArray(messages)?messages:[];
+  if(!list.length){el.innerHTML='<div class="storm-board-empty">No messages yet. Start the conversation.</div>';return;}
+  const sorted=[...list].sort((a,b)=>{
+    const ap=String(a.Pinned||'NO').toUpperCase()==='YES'?1:0,bp=String(b.Pinned||'NO').toUpperCase()==='YES'?1:0;
+    if(ap!==bp)return bp-ap;
+    return String(a.CreatedAt||'').localeCompare(String(b.CreatedAt||''));
+  });
+  el.innerHTML=sorted.map(m=>{
+    const coach=String(m.AuthorType||'').toUpperCase()==='COACH';
+    const pinned=String(m.Pinned||'NO').toUpperCase()==='YES';
+    return `<article class="storm-board-message${coach?' coach':''}${pinned?' pinned':''}"><div class="storm-board-message-head"><strong>${esc(m.DisplayName||'Storm Family')}${coach?' · Coach':''}${pinned?'<span class="storm-board-pin">Pinned</span>':''}</strong><span>${esc(boardTime(m.CreatedAt))}</span></div><p>${esc(m.Message||'')}</p></article>`;
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function boardOpenSession(section,r){
+  section.querySelector('[data-board-login]').style.display='none';
+  section.querySelector('[data-board-shell]').classList.add('open');
+  section.querySelector('[data-board-name]').textContent=r.displayName||boardSavedSession()?.displayName||'Family';
+  boardRenderMessages(section,r.messages||[]);
+  const open=r.boardOpen!==false;
+  section.querySelector('[data-board-compose]').style.display=open?'grid':'none';
+  section.querySelector('[data-board-closed]').style.display=open?'none':'block';
+  clearInterval(BOARD_REFRESH_TIMER);
+  BOARD_REFRESH_TIMER=setInterval(()=>{if(!document.hidden)boardRefresh(section,false).catch(()=>{});},60000);
+}
+async function boardRefresh(section,showStatus){
+  const saved=boardSavedSession();
+  if(!saved?.token)return;
+  const status=section.querySelector('[data-board-status]');
+  if(showStatus){status.textContent='Refreshing Family Board…';status.className='storm-board-status';}
+  try{
+    const r=await boardApi('boardMessages',{token:saved.token});
+    boardOpenSession(section,r);
+    if(showStatus){status.textContent='Family Board updated.';status.className='storm-board-status success';}
+    return r;
+  }catch(e){
+    boardClearSession();
+    section.querySelector('[data-board-shell]').classList.remove('open');
+    section.querySelector('[data-board-login]').style.display='grid';
+    status.textContent=e.message;
+    status.className='storm-board-status error';
+    throw e;
+  }
+}
+async function boardPost(section){
+  const saved=boardSavedSession();
+  if(!saved?.token)return;
+  const box=section.querySelector('[data-board-message]');
+  const btn=section.querySelector('[data-board-post]');
+  const status=section.querySelector('[data-board-status]');
+  const message=box.value.trim();
+  if(!message){status.textContent='Type a message first.';status.className='storm-board-status error';return;}
+  btn.disabled=true;
+  status.textContent='Posting message…';status.className='storm-board-status';
+  try{
+    const r=await boardApi('boardPost',{token:saved.token,message});
+    box.value='';
+    boardOpenSession(section,{...r,displayName:saved.displayName});
+    status.textContent='Message posted.';status.className='storm-board-status success';
+  }catch(e){status.textContent=e.message;status.className='storm-board-status error';}
+  finally{btn.disabled=false;}
+}
 
 let HOME_CALENDAR_CURSOR=null;
 
@@ -286,7 +514,7 @@ function drawHomeCalendar(){
   if(grid)grid.innerHTML=cells.join('');
 }
 
-function renderHome(){const next=upcoming()[0];const n=$('#next-impact');if(n){n.innerHTML=next?`<div class="impact-date"><strong>${esc(dateLabel(next.Date,{month:'short',day:'numeric'}))}</strong><span>${esc(next.Time||'TBD')}</span></div><div class="impact-main"><span class="kicker">${esc(next.Status||'Next Impact')}</span><h3>${esc(next.Title||next.Type)}</h3><p>${esc(next.Opponent?`vs. ${next.Opponent} · `:'')}${esc(next.Location||'Location TBD')}${next.Field?` · ${esc(next.Field)}`:''}</p><div class="impact-meta">${next.ArrivalTime?`<span class="pill">Arrive ${esc(next.ArrivalTime)}</span>`:''}${next.Uniform?`<span class="pill">${esc(next.Uniform)}</span>`:''}<span class="pill orange">${esc(next.Type||'Event')}</span></div></div><a class="button primary" href="event-details.html?id=${encodeURIComponent(next.EventID)}">View Details</a>`:'<div class="empty-state">No upcoming events are published yet.</div>';if(next)renderCountdown(next);}const announcements=arr('announcements').filter(a=>String(a.Visibility||'PUBLIC').toUpperCase()!=='FAMILY').slice(0,3);if($('#announcements'))$('#announcements').innerHTML=announcements.length?announcements.map(announcementCard).join(''):'<div class="empty-state">No current Storm Warnings.</div>';const feat=arr('videos').find(v=>yes(v.Featured))||arr('videos')[0];if($('#featured-video'))$('#featured-video').innerHTML=feat?videoCard(feat,true):'<div class="empty-state">Storm Channel is warming up.</div>';if($('#players-grid'))$('#players-grid').innerHTML=arr('players').slice(0,4).map(playerCard).join('');const t=arr('tryouts').filter(x=>!['CLOSED','COMPLETED','FULL'].includes(String(x.Status||'').toUpperCase())).sort((a,b)=>parseDate(a.Date)-parseDate(b.Date))[0];if($('#home-tryout'))$('#home-tryout').innerHTML=t?tryoutCard(t):'<div class="empty-state">No active tryouts are posted right now. Player Interest remains open.</div>';const w=arr('homeworkWeeks').find(x=>String(x.Status||'').toUpperCase()==='ACTIVE')||arr('homeworkWeeks')[0];if($('#home-homework'))$('#home-homework').innerHTML=w?`<div class="homework-public-card"><span class="kicker">${esc(w.Title)}</span><h3>${esc(w.Theme||'The work continues.')}</h3><p>${esc(w.CoachMessage||'')}</p><div class="impact-meta"><span class="pill">Due ${esc(dateLabel(w.DueDate,{month:'short',day:'numeric'}))}</span><span class="pill orange">Parent code required to submit</span></div><div class="hero-actions"><a class="button primary" href="${StormAPI.appUrl('family')}">Open My Homework</a></div></div>`:'';const pic=arr('picture')[0];if($('#picture-week'))$('#picture-week').innerHTML=pic?`<div class="picture"><img loading="lazy" decoding="async" src="${esc(imageUrl(pic.ImageURL))}" alt="${esc(pic.Title||'Picture of the Week')}"></div><div class="picture-copy"><span class="kicker">${esc(pic.Week||'Storm Season')}</span><h3>${esc(pic.Title||'Picture of the Week')}</h3><p>${esc(pic.Caption||'')}</p></div>`:'<div class="empty-state">Picture of the Week coming soon.</div>';drawHomeCalendar();}
+function renderHome(){const next=upcoming()[0];const n=$('#next-impact');if(n){n.innerHTML=next?`<div class="impact-date"><strong>${esc(dateLabel(next.Date,{month:'short',day:'numeric'}))}</strong><span>${esc(next.Time||'TBD')}</span></div><div class="impact-main"><span class="kicker">${esc(next.Status||'Next Impact')}</span><h3>${esc(next.Title||next.Type)}</h3><p>${esc(next.Opponent?`vs. ${next.Opponent} · `:'')}${esc(next.Location||'Location TBD')}${next.Field?` · ${esc(next.Field)}`:''}</p><div class="impact-meta">${next.ArrivalTime?`<span class="pill">Arrive ${esc(next.ArrivalTime)}</span>`:''}${next.Uniform?`<span class="pill">${esc(next.Uniform)}</span>`:''}<span class="pill orange">${esc(next.Type||'Event')}</span></div></div><a class="button primary" href="event-details.html?id=${encodeURIComponent(next.EventID)}">View Details</a>`:'<div class="empty-state">No upcoming events are published yet.</div>';if(next)renderCountdown(next);}const announcements=arr('announcements').filter(a=>String(a.Visibility||'PUBLIC').toUpperCase()!=='FAMILY').slice(0,3);if($('#announcements'))$('#announcements').innerHTML=announcements.length?announcements.map(announcementCard).join(''):'<div class="empty-state">No current Storm Warnings.</div>';const feat=arr('videos').find(v=>yes(v.Featured))||arr('videos')[0];if($('#featured-video'))$('#featured-video').innerHTML=feat?videoCard(feat,true):'<div class="empty-state">Storm Channel is warming up.</div>';if($('#players-grid'))$('#players-grid').innerHTML=arr('players').slice(0,4).map(playerCard).join('');const t=arr('tryouts').filter(x=>!['CLOSED','COMPLETED','FULL'].includes(String(x.Status||'').toUpperCase())).sort((a,b)=>parseDate(a.Date)-parseDate(b.Date))[0];if($('#home-tryout'))$('#home-tryout').innerHTML=t?tryoutCard(t):'<div class="empty-state">No active tryouts are posted right now. Player Interest remains open.</div>';const w=arr('homeworkWeeks').find(x=>String(x.Status||'').toUpperCase()==='ACTIVE')||arr('homeworkWeeks')[0];if($('#home-homework'))$('#home-homework').innerHTML=w?`<div class="homework-public-card"><span class="kicker">${esc(w.Title)}</span><h3>${esc(w.Theme||'The work continues.')}</h3><p>${esc(w.CoachMessage||'')}</p><div class="impact-meta"><span class="pill">Due ${esc(dateLabel(w.DueDate,{month:'short',day:'numeric'}))}</span><span class="pill orange">Parent code required to submit</span></div><div class="hero-actions"><a class="button primary" href="${StormAPI.appUrl('family')}">Open My Homework</a></div></div>`:'';const pic=arr('picture')[0];if($('#picture-week'))$('#picture-week').innerHTML=pic?`<div class="picture"><img loading="lazy" decoding="async" src="${esc(imageUrl(pic.ImageURL))}" alt="${esc(pic.Title||'Picture of the Week')}"></div><div class="picture-copy"><span class="kicker">${esc(pic.Week||'Storm Season')}</span><h3>${esc(pic.Title||'Picture of the Week')}</h3><p>${esc(pic.Caption||'')}</p></div>`:'<div class="empty-state">Picture of the Week coming soon.</div>';ensureFamilyBoard();drawHomeCalendar();}
 function renderTeam(){const g=$('#players-grid');if(g)g.innerHTML=arr('players').sort((a,b)=>(+a.SortOrder||99)-(+b.SortOrder||99)).map(playerCard).join('')||'<div class="empty-state">Roster coming soon.</div>';}
 function renderPlayer(){const id=new URLSearchParams(location.search).get('id');const p=arr('players').find(x=>String(x.PlayerID)===String(id))||arr('players')[0];const el=$('#player-profile');if(!p||!el){if(el)el.innerHTML='<div class="empty-state">Player profile not found.</div>';return;}const x=val(p.ProfileX,50),y=val(p.ProfileY,35),z=val(p.ProfileZoom,1);el.innerHTML=`<section class="profile-hero"><div class="profile-photo" style="--px:${x}%;--py:${y}%;--pz:${z}"><img decoding="async" fetchpriority="high" src="${esc(imageUrl(p.BackgroundURL||p.PhotoURL))}" alt="${esc(p.FirstName)}"></div><div class="shell profile-copy"><span class="profile-number">#${esc(p.Jersey)}</span><h1>${esc(p.FirstName)}</h1><p>${esc(p.Positions||'Storm Athlete')} · ${esc(p.BatsThrows||'')}</p></div></section><section class="section"><div class="shell profile-grid"><article class="glass-card"><span class="kicker">Her Role in the Storm</span><h3>${esc(p.Positions||'Athlete')}</h3><p>${esc(p.StrongestPart||'Development in progress.')}</p></article><article class="glass-card"><span class="kicker">Her Forecast</span><h3>Season Goal</h3><p>${esc(p.SeasonGoal||'Get better every week.')}</p></article><article class="glass-card"><span class="kicker">Player Card</span><dl class="profile-facts"><div><dt>Jersey</dt><dd>#${esc(p.Jersey)}</dd></div><div><dt>Positions</dt><dd>${esc(p.Positions||'')}</dd></div><div><dt>Bats / Throws</dt><dd>${esc(p.BatsThrows||'')}</dd></div><div><dt>Class</dt><dd>${esc(p.ClassYear||'')}</dd></div></dl></article><article class="glass-card"><span class="kicker">Storm Mindset</span><h3>“${esc(p.Quote||'Together. Tougher.')}”</h3></article></div></section>${playerStatsSection(p)}${playerHighlightsSection(p)}`;}
 function renderTracker(){const list=$('#events-list'), filters=$('#event-filters');if(!list)return;const data=arr('calendar').sort((a,b)=>eventDateTime(a)-eventDateTime(b));const types=['All',...new Set(data.map(e=>e.Type).filter(Boolean))];if(filters){filters.innerHTML=types.map((t,i)=>`<button class="filter-chip ${i===0?'active':''}" data-filter="${esc(t)}">${esc(t)}</button>`).join('');filters.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;$$('.filter-chip',filters).forEach(x=>x.classList.remove('active'));b.classList.add('active');const f=b.dataset.filter;list.innerHTML=data.filter(x=>f==='All'||x.Type===f).map(eventCard).join('')||'<div class="empty-state">No matching events.</div>';});}list.innerHTML=data.map(eventCard).join('')||'<div class="empty-state">No events published.</div>';}
