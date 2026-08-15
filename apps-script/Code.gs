@@ -7,6 +7,95 @@
 const STORM_VERSION = '5.1-gamechanger-postgame';
 const TZ = 'America/New_York';
 
+// Public website speed cache.
+// This caches ONLY the public payload. Family/admin/private data is never placed here.
+const PUBLIC_CACHE_PREFIX = 'storm-public-v2:';
+const PUBLIC_CACHE_SECONDS = 300;      // 5 minutes; writes invalidate immediately.
+const PUBLIC_CACHE_CHUNK_CHARS = 20000; // Safe under CacheService's 100 KB/value limit.
+
+function publicCacheSheetNames_() {
+  return new Set([
+    'Website Settings',
+    'Website Players',
+    'Website Calendar',
+    'Website Announcements',
+    'Website Videos',
+    'Website Shoutouts',
+    'Website Picture of the Week',
+    'Website Gallery',
+    'Website Tryouts',
+    'Homework Weeks',
+    'Event Rosters',
+    'Player Stats'
+  ]);
+}
+
+function readPublicPayloadCache_() {
+  try {
+    const cache = CacheService.getScriptCache();
+    const metaKey = PUBLIC_CACHE_PREFIX + 'meta';
+    const meta = cache.get(metaKey);
+    const count = Number(meta || 0);
+    if (!count || count < 1 || count > 100) return null;
+
+    const keys = [];
+    for (let i = 0; i < count; i++) keys.push(PUBLIC_CACHE_PREFIX + 'part:' + i);
+    const parts = cache.getAll(keys);
+    const json = keys.map(k => parts[k] || '').join('');
+    if (!json || keys.some(k => !parts[k])) return null;
+
+    const data = JSON.parse(json);
+    return data && data.ok ? data : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function writePublicPayloadCache_(data) {
+  try {
+    if (!data || !data.ok) return;
+    const cache = CacheService.getScriptCache();
+    const json = JSON.stringify(data);
+    const chunks = [];
+    for (let i = 0; i < json.length; i += PUBLIC_CACHE_CHUNK_CHARS) {
+      chunks.push(json.slice(i, i + PUBLIC_CACHE_CHUNK_CHARS));
+    }
+    if (!chunks.length) return;
+
+    const values = {};
+    chunks.forEach((part, i) => values[PUBLIC_CACHE_PREFIX + 'part:' + i] = part);
+    cache.putAll(values, PUBLIC_CACHE_SECONDS);
+    cache.put(PUBLIC_CACHE_PREFIX + 'meta', String(chunks.length), PUBLIC_CACHE_SECONDS);
+  } catch (e) {
+    // Cache is an optimization only. Never let a cache failure break the website.
+  }
+}
+
+function invalidatePublicPayloadCache_() {
+  try {
+    const cache = CacheService.getScriptCache();
+    const metaKey = PUBLIC_CACHE_PREFIX + 'meta';
+    const count = Number(cache.get(metaKey) || 0);
+    const keys = [metaKey];
+    for (let i = 0; i < count; i++) keys.push(PUBLIC_CACHE_PREFIX + 'part:' + i);
+    cache.removeAll(keys);
+  } catch (e) {}
+}
+
+function invalidatePublicPayloadForSheet_(sheetName) {
+  if (publicCacheSheetNames_().has(String(sheetName || ''))) {
+    invalidatePublicPayloadCache_();
+  }
+}
+
+// If the coach edits a public-data tab directly in Google Sheets, refresh the public cache.
+function onEdit(e) {
+  try {
+    const sh = e && e.range && e.range.getSheet();
+    if (sh) invalidatePublicPayloadForSheet_(sh.getName());
+  } catch (err) {}
+}
+
 const HEADERS = {
   'Website Settings': ['Key','Value','Notes'],
   'Website Players': ['Show','Approved','PlayerID','Jersey','FirstName','LastInitial','Positions','BatsThrows','ClassYear','PhotoURL','BackgroundURL','StrongestPart','SeasonGoal','FavoriteColor','FavoritePlayer','Excitement','Quote','CardX','CardY','CardZoom','ProfileX','ProfileY','ProfileZoom','SortOrder','GameChangerURL','ShowStats'],
@@ -74,6 +163,7 @@ function initializeStormHQ() {
   ensureDriveFolder_('Storm HQ - Team Photos');
   ensureDriveFolder_('Storm HQ - Videos');
   SpreadsheetApp.flush();
+  invalidatePublicPayloadCache_();
   logAdmin_('SYSTEM_INIT','System','',`Storm HQ ${STORM_VERSION}`);
   SpreadsheetApp.getUi().alert('Storm HQ is ready. Next: Set Coach Password, then Create / Repair Google Forms.');
 }
@@ -152,23 +242,30 @@ function include(filename){ return HtmlService.createHtmlOutputFromFile(filename
 function output_(payload,callback){ const json=JSON.stringify(payload); if(callback) return ContentService.createTextOutput(`${callback}(${json});`).setMimeType(ContentService.MimeType.JAVASCRIPT); return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON); }
 
 function publicPayload_() {
+  const cached = readPublicPayloadCache_();
+  if (cached) return cached;
+
   const data={ok:true,version:STORM_VERSION,settings:getSettings_()};
   Object.keys(PUBLIC_MAP).forEach(k => data[k]=publicRows_(PUBLIC_MAP[k]));
 
-  // Family-only coach messages must never leave the private backend in the public feed.
-  data.announcements = publicRows_('Website Announcements').filter(a =>
+  // PUBLIC_MAP already read announcements once. Filter that result instead of
+  // reading Website Announcements from Sheets a second time.
+  data.announcements = (data.announcements || []).filter(a =>
     ['PUBLIC','BOTH'].includes(String(a.Visibility||'PUBLIC').toUpperCase())
   );
 
-  data.playerStats = publicPlayerStats_();
+  // Reuse the players already loaded above instead of reading Website Players twice.
+  data.playerStats = publicPlayerStats_(data.players || []);
 
   const eventById={}; data.calendar.forEach(e=>eventById[String(e.EventID)]=e);
   data.eventRosters=rows_('Event Rosters').filter(r => String(r.Assigned||'YES').toUpperCase()==='YES' && eventById[String(r.EventID)] && String(eventById[String(r.EventID)].RosterVisibility||'FAMILY').toUpperCase()==='PUBLIC').map(serializeRecord_);
+
+  writePublicPayloadCache_(data);
   return data;
 }
 function publicRows_(name){ return rows_(name).filter(r => String(r.Show||'YES').toUpperCase()==='YES' && String(r.Approved||'YES').toUpperCase()==='YES').map(serializeRecord_).sort((a,b)=>(Number(a.SortOrder)||999)-(Number(b.SortOrder)||999)); }
-function publicPlayerStats_(){
-  const players=publicRows_('Website Players');
+function publicPlayerStats_(players){
+  players = Array.isArray(players) && players.length ? players : publicRows_('Website Players');
   const byId={};
   players.forEach(p=>{ if(String(p.ShowStats||'YES').toUpperCase()!=='NO') byId[String(p.PlayerID)]=p; });
   return rows_('Player Stats').filter(r=>byId[String(r.PlayerID)]).map(r=>{
@@ -207,9 +304,9 @@ function saveRowDirect_(sheetName,record) {
   const old = rowNum<=sh.getLastRow()?sh.getRange(rowNum,1,1,headers.length).getValues()[0]:headers.map(()=> '');
   const merged={}; headers.forEach((h,i)=>merged[h]=(record[h]!==undefined?record[h]:old[i]));
   if(headers.includes('Show') && !merged.Show) merged.Show='YES'; if(headers.includes('Approved') && !merged.Approved)merged.Approved='YES';
-  sh.getRange(rowNum,1,1,headers.length).setValues([headers.map(h=>merged[h]===undefined?'':merged[h])]); return merged;
+  sh.getRange(rowNum,1,1,headers.length).setValues([headers.map(h=>merged[h]===undefined?'':merged[h])]); invalidatePublicPayloadForSheet_(sheetName); return merged;
 }
-function adminDeleteRow(token,sheetName,keyValue){ requireAdmin_(token); if(!ADMIN_EDITABLE.includes(sheetName))throw new Error('Not allowed.'); const key=KEY_FIELD[sheetName],sh=ensureSheet_(sheetName),data=rows_(sheetName); let row=0;data.some((r,i)=>{if(String(r[key])===String(keyValue)){row=i+2;return true;}return false;});if(row)sh.deleteRow(row);logAdmin_('DELETE',sheetName,String(keyValue),'Coach Control Center');return {ok:true}; }
+function adminDeleteRow(token,sheetName,keyValue){ requireAdmin_(token); if(!ADMIN_EDITABLE.includes(sheetName))throw new Error('Not allowed.'); const key=KEY_FIELD[sheetName],sh=ensureSheet_(sheetName),data=rows_(sheetName); let row=0;data.some((r,i)=>{if(String(r[key])===String(keyValue)){row=i+2;return true;}return false;});if(row){sh.deleteRow(row);invalidatePublicPayloadForSheet_(sheetName);}logAdmin_('DELETE',sheetName,String(keyValue),'Coach Control Center');return {ok:true}; }
 
 
 function adminImportGameChangerCsv(token,csvText){
@@ -370,7 +467,7 @@ function saveBase64File_(data,fileName,mimeType,folderName){
 }
 function ensureDriveFolder_(name){ const it=DriveApp.getFoldersByName(name); return it.hasNext()?it.next():DriveApp.createFolder(name); }
 
-function adminSaveEventRoster(token,eventId,group,playerIds,notes){ requireAdmin_(token); eventId=String(eventId);group=group||'Event Group'; const sh=ensureSheet_('Event Rosters'); const all=rows_('Event Rosters'); const keep=all.filter(r=>!(String(r.EventID)===eventId&&String(r.Group||'Event Group')===String(group))); sh.clearContents(); sh.getRange(1,1,1,HEADERS['Event Rosters'].length).setValues([HEADERS['Event Rosters']]); const players=rows_('Website Players'),byId={};players.forEach(p=>byId[String(p.PlayerID)]=p); const now=new Date(); const rows=keep.concat((playerIds||[]).map(pid=>({RosterID:'roster-'+Utilities.getUuid().slice(0,8),EventID:eventId,PlayerID:pid,PlayerName:byId[String(pid)]?byId[String(pid)].FirstName:'',Group:group,Assigned:'YES',Notes:notes||'',UpdatedAt:now}))); if(rows.length)sh.getRange(2,1,rows.length,HEADERS['Event Rosters'].length).setValues(rows.map(r=>HEADERS['Event Rosters'].map(h=>r[h]||''))); return {ok:true,count:(playerIds||[]).length}; }
+function adminSaveEventRoster(token,eventId,group,playerIds,notes){ requireAdmin_(token); eventId=String(eventId);group=group||'Event Group'; const sh=ensureSheet_('Event Rosters'); const all=rows_('Event Rosters'); const keep=all.filter(r=>!(String(r.EventID)===eventId&&String(r.Group||'Event Group')===String(group))); sh.clearContents(); sh.getRange(1,1,1,HEADERS['Event Rosters'].length).setValues([HEADERS['Event Rosters']]); const players=rows_('Website Players'),byId={};players.forEach(p=>byId[String(p.PlayerID)]=p); const now=new Date(); const rows=keep.concat((playerIds||[]).map(pid=>({RosterID:'roster-'+Utilities.getUuid().slice(0,8),EventID:eventId,PlayerID:pid,PlayerName:byId[String(pid)]?byId[String(pid)].FirstName:'',Group:group,Assigned:'YES',Notes:notes||'',UpdatedAt:now}))); if(rows.length)sh.getRange(2,1,rows.length,HEADERS['Event Rosters'].length).setValues(rows.map(r=>HEADERS['Event Rosters'].map(h=>r[h]||''))); invalidatePublicPayloadForSheet_('Event Rosters'); return {ok:true,count:(playerIds||[]).length}; }
 
 function adminHomeworkReport(token,weekId){ requireAdmin_(token); const players=publicRows_('Website Players'),responses=rows_('Homework Responses').filter(r=>!weekId||String(r.WeekID)===String(weekId)); const latest={};responses.forEach(r=>latest[String(r.PlayerID)+'|'+String(r.WeekID)]=serializeRecord_(r));const weeks=publicRows_('Homework Weeks');return {ok:true,weeks:weeks,players:players,responses:Object.values(latest)}; }
 function adminAvailabilityReport(token,eventId){ requireAdmin_(token); return {ok:true,events:publicRows_('Website Calendar'),players:publicRows_('Website Players'),responses:rows_('Availability').filter(r=>!eventId||String(r.EventID)===String(eventId)).map(serializeRecord_)}; }
