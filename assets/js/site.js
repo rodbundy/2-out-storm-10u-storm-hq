@@ -277,7 +277,7 @@ function ensureFamilyBoard(){
     </div>
     <div class="storm-board-login" data-board-login>
       <div class="storm-board-field"><label for="storm-board-player">Player</label><select id="storm-board-player" data-board-player><option value="">Choose your player…</option>${players.map(p=>`<option value="${esc(p.PlayerID)}">#${esc(p.Jersey)} ${esc(p.FirstName)}</option>`).join('')}</select></div>
-      <div class="storm-board-field"><label for="storm-board-code">Family Board Code</label><input id="storm-board-code" data-board-code inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="10 + jersey #"></div>
+      <div class="storm-board-field"><label for="storm-board-code">Family Board Code</label><input id="storm-board-code" data-board-code type="password" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter code"></div>
       <button class="button orange" type="button" data-board-enter>Enter the Board</button>
     </div>
     <div class="storm-board-status" data-board-status>Board messages stay private until a family signs in.</div>
