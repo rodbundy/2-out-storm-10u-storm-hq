@@ -1,11 +1,10 @@
 // STORM HQ PUSH CONFIG
 // Public Firebase web config + public VAPID key only. NEVER put a service-account private key here.
-// Tomorrow: replace the placeholders, then change enabled to true.
 globalThis.STORM_PUSH_CONFIG = {
   enabled: true,
   sdkVersion: '12.17.1',
   firebase: {
-    apiKey: 'AIzaSyCeI5T-okqbTOWbzrG3-eqHjrT3hC9XV2c',
+    apiKey: 'AIzaSyCel5T-okqbTOWbzrG3-eqHjrT3hC9XV2c',
     authDomain: 'out-storm-hq.firebaseapp.com',
     projectId: 'out-storm-hq',
     storageBucket: 'out-storm-hq.firebasestorage.app',
