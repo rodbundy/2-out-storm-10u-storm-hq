@@ -1,6 +1,5 @@
 // STORM HQ PUSH CONFIG
 // Public Firebase web config + public VAPID key only. NEVER put a service-account private key here.
-// Tomorrow: replace the placeholders, then change enabled to true.
 globalThis.STORM_PUSH_CONFIG = {
   enabled: true,
   sdkVersion: '12.17.1',
