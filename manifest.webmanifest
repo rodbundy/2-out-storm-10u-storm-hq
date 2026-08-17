@@ -1,0 +1,82 @@
+{
+  "id": "/",
+  "name": "2 Out Storm 10U \u2014 Storm HQ",
+  "short_name": "Storm HQ",
+  "description": "2 Out Storm 10U family hub for schedule, homework, team updates, availability, Family Board, and Storm notifications.",
+  "start_url": "/?source=storm-hq-app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#08060d",
+  "theme_color": "#32174f",
+  "categories": [
+    "sports",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/assets/img/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/img/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/img/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Storm Tracker",
+      "short_name": "Tracker",
+      "url": "/storm-tracker.html",
+      "icons": [
+        {
+          "src": "/assets/img/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Storm Homework",
+      "short_name": "Homework",
+      "url": "/storm-homework.html",
+      "icons": [
+        {
+          "src": "/assets/img/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "The Shelter",
+      "short_name": "Family",
+      "url": "/the-shelter.html",
+      "icons": [
+        {
+          "src": "/assets/img/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Storm Notifications",
+      "short_name": "Alerts",
+      "url": "/storm-notifications.html",
+      "icons": [
+        {
+          "src": "/assets/img/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
