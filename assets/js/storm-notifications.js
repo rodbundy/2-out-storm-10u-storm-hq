@@ -27,7 +27,7 @@ async function firebaseRegister(){
   const appMod=await import(`https://www.gstatic.com/firebasejs/${v}/firebase-app.js`);
   const msgMod=await import(`https://www.gstatic.com/firebasejs/${v}/firebase-messaging.js`);
   if(msgMod.isSupported && !(await msgMod.isSupported()))throw new Error('Firebase messaging is not supported on this browser.');
-  let app;try{app=appMod.getApp('storm-push')}catch(e){app=appMod.initializeApp(cfg.firebase,'storm-push')}
+  let app;try{app=appMod.getApp()}catch(e){app=appMod.initializeApp(cfg.firebase)}
   const messaging=msgMod.getMessaging(app);
   // 2026 FCM uses Firebase Installation IDs. Keep a token fallback for browsers/SDKs still transitioning.
   if(typeof msgMod.register==='function'&&typeof msgMod.onRegistered==='function'){
@@ -74,4 +74,4 @@ async function enablePush(){
 async function savePrefs(){try{await api('pushPrefs',{token:session.token,deviceId:deviceId(),prefs:JSON.stringify(prefs())});toast('Alert choices saved.')}catch(e){toast(e.message)}}
 async function disablePush(){try{await api(coachMode?'pushCoachDisable':'pushDisable',{token:session.token,deviceId:deviceId()});clearSession();currentTarget=null;render();toast('This phone was disconnected.')}catch(e){toast(e.message)}}
 
-session=savedSession();render();
+session=savedSession();render()
