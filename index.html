@@ -183,6 +183,7 @@
         <a data-nav="homework" href="storm-homework.html">Homework</a>
         <a data-nav="reports" href="storm-reports.html">Reports</a>
         <a data-nav="shelter" href="the-shelter.html">The Shelter</a>
+        <a href="storm-notifications.html">Notifications</a>
         <a class="nav-cta" data-nav="join" href="join-the-storm.html">Join</a>
       </nav>
 
@@ -424,6 +425,33 @@
   <script src="assets/js/config.js"></script>
   <script src="assets/js/fallback-data.js"></script>
   <script src="assets/js/api.js"></script>
+
+  <!-- This makes the homepage ready for a separate coach-only setting:
+       Website Settings key = heroImageURL -->
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const heroImage = document.querySelector('[data-hero-image]');
+      if (!heroImage || !window.StormAPI) return;
+
+      try {
+        const data = await StormAPI.publicData();
+        const settings = data && data.settings ? data.settings : {};
+
+        const coachHeroURL =
+          settings.heroImageURL ||
+          settings.homeHeroImageURL ||
+          settings.featureImageURL ||
+          '';
+
+        if (coachHeroURL) {
+          heroImage.src = coachHeroURL;
+        }
+      } catch (error) {
+        console.warn('Coach feature image could not be loaded.', error);
+      }
+    });
+  </script>
+
   <script src="assets/js/site.js"></script>
 </body>
 </html>
