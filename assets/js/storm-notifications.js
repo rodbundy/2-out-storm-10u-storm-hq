@@ -22,7 +22,7 @@ async function firebaseRegister(){
   if(!('Notification'in window)||!('serviceWorker'in navigator))throw new Error('Push notifications are not supported on this browser.');
   if(ios()&&!standalone())throw new Error('On iPhone, add Storm HQ to your Home Screen first, then open the installed app and enable notifications.');
   const permission=await Notification.requestPermission();if(permission!=='granted')throw new Error('Notification permission was not allowed. You can enable it later in phone/browser settings.');
-  const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js',{scope:'/'});await navigator.serviceWorker.ready;
+  const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js',{scope:'/',updateViaCache:'none'});await reg.update();await navigator.serviceWorker.ready;
   const v=cfg.sdkVersion||'12.17.1';
   const appMod=await import(`https://www.gstatic.com/firebasejs/${v}/firebase-app.js`);
   const msgMod=await import(`https://www.gstatic.com/firebasejs/${v}/firebase-messaging.js`);
@@ -34,7 +34,7 @@ async function firebaseRegister(){
     const fid=await new Promise((resolve,reject)=>{
       let settled=false;const timer=setTimeout(()=>{if(!settled){settled=true;reject(new Error('Push registration timed out. Try once more.'))}},15000);
       const off=msgMod.onRegistered(messaging,id=>{if(settled||!id)return;settled=true;clearTimeout(timer);try{if(typeof off==='function')off()}catch(e){}resolve(id)});
-      msgMod.register(messaging,{vapidKey:cfg.vapidKey}).catch(e=>{if(!settled){settled=true;clearTimeout(timer);reject(e)}});
+      msgMod.register(messaging,{vapidKey:cfg.vapidKey,serviceWorkerRegistration:reg}).catch(e=>{if(!settled){settled=true;clearTimeout(timer);reject(e)}});
     });
     targetType='FID';currentTarget=fid;
   }else{
