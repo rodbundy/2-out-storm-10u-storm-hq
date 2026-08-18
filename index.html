@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
   <link rel="stylesheet" href="assets/css/styles.css">
 
   <title>2 Out Storm 10U | The Eye</title>
@@ -164,7 +164,7 @@
       <a class="brand" href="index.html" aria-label="2 Out Storm 10U Home">
         <img
           class="team-main-logo"
-          src="assets/img/2out-storm-10u-logo.png"
+          src="assets/img/2out-storm-10u-logo.webp"
           alt="2 Out Storm 10U Fastpitch">
         <span class="brand-mini">
           <b data-team-name>2 Out Storm 10U</b>
@@ -233,7 +233,7 @@
             <img
               id="coach-feature-image"
               data-hero-image
-              src="assets/img/2out-storm-10u-logo.png"
+              src="assets/img/2out-storm-10u-logo.webp"
               alt="2 Out Storm coach featured photo">
 
             <div class="coach-feature-label">
@@ -397,7 +397,7 @@
         <!-- Keep the official team logo in the footer too -->
         <img
           class="team-main-logo"
-          src="assets/img/2out-storm-10u-logo.png"
+          src="assets/img/2out-storm-10u-logo.webp"
           alt="2 Out Storm 10U Fastpitch">
 
         <p>
@@ -425,32 +425,6 @@
   <script src="assets/js/config.js"></script>
   <script src="assets/js/fallback-data.js"></script>
   <script src="assets/js/api.js"></script>
-
-  <!-- This makes the homepage ready for a separate coach-only setting:
-       Website Settings key = heroImageURL -->
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const heroImage = document.querySelector('[data-hero-image]');
-      if (!heroImage || !window.StormAPI) return;
-
-      try {
-        const data = await StormAPI.publicData();
-        const settings = data && data.settings ? data.settings : {};
-
-        const coachHeroURL =
-          settings.heroImageURL ||
-          settings.homeHeroImageURL ||
-          settings.featureImageURL ||
-          '';
-
-        if (coachHeroURL) {
-          heroImage.src = coachHeroURL;
-        }
-      } catch (error) {
-        console.warn('Coach feature image could not be loaded.', error);
-      }
-    });
-  </script>
 
   <script src="assets/js/site.js"></script>
 </body>

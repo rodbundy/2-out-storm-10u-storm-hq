@@ -186,7 +186,7 @@
       s.src=u.toString();
       document.head.appendChild(s);
 
-      timeout=setTimeout(()=>finish(backendUnavailable()),45000);
+      timeout=setTimeout(()=>finish(backendUnavailable()),12000);
     });
 
     return inFlight;

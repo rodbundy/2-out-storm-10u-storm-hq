@@ -584,6 +584,23 @@ function renderChannel(){const data=arr('videos');const feat=data.find(v=>yes(v.
 function renderHomework(){const w=arr('homeworkWeeks').find(x=>String(x.Status||'').toUpperCase()==='ACTIVE')||arr('homeworkWeeks')[0];const el=$('#homework-public');if(el)el.innerHTML=w?`<article class="homework-public-card"><span class="kicker">${esc(w.Title)}</span><h3>${esc(w.Theme||'The work continues.')}</h3><p>${esc(w.CoachMessage||'')}</p><div class="impact-meta"><span class="pill">Starts ${esc(dateLabel(w.StartDate,{month:'short',day:'numeric'}))}</span><span class="pill orange">Due ${esc(dateLabel(w.DueDate,{month:'short',day:'numeric'}))}</span></div><p><small>Player-specific completion, questions, and running totals are protected by the family code.</small></p><a class="button primary" href="${StormAPI.appUrl('family')}">Open My Homework</a></article>`:'<div class="empty-state">No homework week is currently published.</div>';}
 function renderDevelopment(){const groups={};arr('videos').forEach(v=>{if(!groups[v.Category])groups[v.Category]=[];groups[v.Category].push(v)});const el=$('#development-grid');if(el)el.innerHTML=Object.entries(groups).map(([c,vs])=>`<article class="development-card"><span class="kicker">Storm Development</span><h3>${esc(c)}</h3><p>${esc(vs[0]?.Description||'Development resources selected by the coaching staff.')}</p><a class="text-link" href="storm-channel.html">${vs.length} video${vs.length===1?'':'s'} →</a></article>`).join('')||'<div class="empty-state">Development videos coming soon.</div>';}
 function renderReports(){const s=$('#shoutouts');if(s)s.innerHTML=arr('shoutouts').map(announcementCard).join('')||'<div class="empty-state">No Storm Reports yet.</div>';const g=$('#gallery');if(g)g.innerHTML=arr('gallery').map(p=>`<article class="gallery-card"><img loading="lazy" decoding="async" src="${esc(imageUrl(p.ImageURL))}" alt="${esc(p.Title||'Storm photo')}"><div><h3>${esc(p.Title||'Inside the Storm')}</h3><p>${esc(p.Caption||'')}</p></div></article>`).join('')||'<div class="empty-state">Storm Gallery coming soon.</div>';}
-async function init(){wireImmediateNav();DATA=await StormAPI.publicData();if(!DATA.settings&&window.STORM_FALLBACK)DATA=window.STORM_FALLBACK;applyBrand();injectStormEnhancementStyles();if(DATA.connectionError){const b=document.createElement('div');b.className='connection-banner';b.innerHTML='<strong>Storm HQ connection temporarily unavailable.</strong> Live team data is hidden until the secure backend reconnects.';document.body.insertBefore(b,document.querySelector('main'));}wireLinks();const p=document.body.dataset.page;({home:renderHome,team:renderTeam,player:renderPlayer,tracker:renderTracker,event:renderEvent,tryouts:renderTryouts,channel:renderChannel,homework:renderHomework,development:renderDevelopment,reports:renderReports,join:renderTryouts}[p]||(()=>{}))();}
+function renderCurrentPage(){const p=document.body.dataset.page;({home:renderHome,team:renderTeam,player:renderPlayer,tracker:renderTracker,event:renderEvent,tryouts:renderTryouts,channel:renderChannel,homework:renderHomework,development:renderDevelopment,reports:renderReports,join:renderTryouts}[p]||(()=>{}))();}
+function showConnectionBanner(){if(document.querySelector('.connection-banner'))return;const b=document.createElement('div');b.className='connection-banner';b.innerHTML='<strong>Storm HQ connection temporarily unavailable.</strong> Live team data is hidden until the secure backend reconnects.';document.body.insertBefore(b,document.querySelector('main'));}
+function applyLiveData(data){if(!data)return;DATA=data;if(!DATA.settings&&window.STORM_FALLBACK)DATA=window.STORM_FALLBACK;applyBrand();wireLinks();renderCurrentPage();if(DATA.connectionError)showConnectionBanner();}
+function init(){
+  // SPEED: make navigation, branding shell, and controls usable immediately.
+  // Live Google data is deliberately NOT allowed to block first paint.
+  wireImmediateNav();
+  DATA=window.STORM_FALLBACK||{};
+  applyBrand();
+  injectStormEnhancementStyles();
+  wireLinks();
+
+  StormAPI.publicData().then(applyLiveData).catch(()=>showConnectionBanner());
+
+  // When stale cached data is painted first, silently refresh the visible page
+  // as soon as Apps Script returns newer data.
+  window.addEventListener('stormhq:public-updated',e=>applyLiveData(e.detail&&e.detail.data));
+}
 document.addEventListener('DOMContentLoaded',init);
 })();
