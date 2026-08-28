@@ -2,18 +2,13 @@
    SPEED RULE: cache the shell, never intercept Apps Script API calls,
    and NEVER serve a cached Firebase push config. */
 
-const STORM_CACHE='storm-hq-shell-v3';
+const STORM_CACHE='storm-hq-shell-v4-main-fast';
 
 const STORM_CORE=[
   '/', '/index.html', '/offline.html', '/manifest.webmanifest',
-  '/meet-the-storm.html', '/storm-tracker.html', '/tryout-center.html',
-  '/storm-channel.html', '/storm-homework.html', '/storm-reports.html',
-  '/the-shelter.html', '/join-the-storm.html', '/family.html', '/admin.html',
-  '/availability.html', '/event-details.html', '/player.html',
-  '/storm-development.html', '/website-guide.html', '/storm-notifications.html',
   '/assets/css/styles.css', '/assets/css/storm-pwa.css',
-  '/assets/js/config.js', '/assets/js/fallback-data.js', '/assets/js/api.js',
-  '/assets/js/site.js', '/assets/js/storm-pwa.js',
+  '/assets/js/config.js', '/assets/js/fallback-data.js',
+  '/assets/js/api.js', '/assets/js/site.js', '/assets/js/storm-pwa.js',
   '/assets/img/2out-storm-10u-logo.webp', '/assets/img/storm-logo.svg',
   '/assets/img/icons/icon-192.png', '/assets/img/icons/icon-512.png',
   '/assets/img/icons/icon-512-maskable.png', '/assets/img/icons/badge-96.png'

@@ -1,1 +1,83 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0a0710"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript><link rel="stylesheet" href="assets/css/styles.css"><title>Storm Channel | 2 Out Storm 10U</title><meta name="description" content="2 Out Storm 10U fastpitch team website."></head><body data-page="channel"><header class="topbar"><div class="shell nav"><a class="brand" href="index.html"><img data-brand-logo src="assets/img/storm-logo.svg" alt="2 Out Storm 10U"><span class="brand-mini"><b data-team-name>2 Out Storm 10U</b><small data-team-tagline>Together. Tougher.</small></span></a><button class="nav-toggle" aria-expanded="false">Menu</button><nav class="nav-links" aria-label="Main navigation"><a data-nav="home" href="index.html">The Eye</a><a data-nav="team" href="meet-the-storm.html">Meet the Storm</a><a data-nav="tracker" href="storm-tracker.html">Tracker</a><a data-nav="tryouts" href="tryout-center.html">Tryouts</a><a data-nav="channel" href="storm-channel.html">Channel</a><a data-nav="homework" href="storm-homework.html">Homework</a><a data-nav="reports" href="storm-reports.html">Reports</a><a data-nav="shelter" href="the-shelter.html">The Shelter</a><a class="nav-cta" data-nav="join" href="join-the-storm.html">Join</a></nav></div></header><main><section class="page-hero"><div class="shell"><span class="eyebrow">Storm Channel</span><h1>Live From<br><span>The Eye.</span></h1><p>Games, lightning strikes, defensive plays, pitching, development, and behind-the-Storm moments.</p></div></section><section class="section"><div class="shell"><div id="video-filters" class="filters"></div><div id="featured-video"></div><div id="video-grid" class="video-grid section-gap"></div></div></section></main><footer class="footer"><div class="shell footer-grid"><div><img data-brand-logo src="assets/img/storm-logo.svg" alt="2 Out Storm"><p><span data-team-tagline>Together. Tougher.</span> <span class="muted">The Storm Is Building.</span></p><small>© <span data-year></span> <span data-team-name>2 Out Storm 10U</span></small></div><div class="footer-links"><a href="storm-channel.html">Storm Channel</a><a data-app-link="family" href="#">Family Portal</a><a data-app-link="admin" href="#">Coach Control Center</a><a href="website-guide.html">? Website Guide</a><a data-sms="Hi Coach, I have a question about the team." href="#">Contact Coach</a></div></div></footer><script src="assets/js/config.js"></script><script src="assets/js/fallback-data.js"></script><script src="assets/js/api.js"></script><script src="assets/js/site.js"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0a0710"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript><link rel="stylesheet" href="assets/css/styles.css"><title>Storm Channel | 2 Out Storm 10U</title><meta name="description" content="2 Out Storm 10U fastpitch team website.">
+<style>
+  .gc-channel-window{
+    position:relative;
+    overflow:hidden;
+    display:grid;
+    grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr);
+    gap:28px;
+    align-items:center;
+    padding:30px;
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:26px;
+    background:
+      radial-gradient(circle at 90% 10%,rgba(255,107,37,.18),transparent 34%),
+      radial-gradient(circle at 10% 90%,rgba(142,73,215,.22),transparent 38%),
+      linear-gradient(145deg,rgba(30,15,48,.97),rgba(8,6,13,.98));
+    box-shadow:0 28px 80px rgba(0,0,0,.38);
+  }
+  .gc-channel-window:after{
+    content:"";
+    position:absolute;
+    width:340px;
+    height:340px;
+    right:-175px;
+    bottom:-205px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,107,37,.20),transparent 68%);
+    pointer-events:none;
+  }
+  .gc-channel-copy,.gc-channel-actions{position:relative;z-index:1}
+  .gc-channel-copy h2{margin:5px 0 10px;font-size:clamp(30px,5vw,52px);line-height:.98}
+  .gc-channel-copy p{max-width:720px;color:var(--muted);font-size:1rem;line-height:1.6}
+  .gc-channel-facts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .gc-channel-facts span{
+    padding:8px 11px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.05);
+    color:#fff;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.04em;
+  }
+  .gc-channel-actions{
+    display:grid;
+    gap:10px;
+    padding:18px;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:20px;
+    background:rgba(255,255,255,.045);
+  }
+  .gc-channel-actions strong{color:#fff;font-size:18px}
+  .gc-channel-actions p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
+  .gc-channel-actions .button{width:100%;justify-content:center;box-sizing:border-box}
+  @media(max-width:760px){
+    .gc-channel-window{grid-template-columns:1fr;gap:18px;padding:21px 17px;border-radius:20px}
+  }
+</style>
+</head><body data-page="channel"><header class="topbar"><div class="shell nav"><a class="brand" href="index.html"><img data-brand-logo src="assets/img/storm-logo.svg" alt="2 Out Storm 10U"><span class="brand-mini"><b data-team-name>2 Out Storm 10U</b><small data-team-tagline>Together. Tougher.</small></span></a><button class="nav-toggle" aria-expanded="false">Menu</button><nav class="nav-links" aria-label="Main navigation"><a data-nav="home" href="index.html">The Eye</a><a data-nav="team" href="meet-the-storm.html">Meet the Storm</a><a data-nav="tracker" href="storm-tracker.html">Tracker</a><a data-nav="tryouts" href="tryout-center.html">Tryouts</a><a data-nav="channel" href="storm-channel.html">Channel</a><a data-nav="homework" href="storm-homework.html">Homework</a><a data-nav="reports" href="storm-reports.html">Reports</a><a data-nav="shelter" href="the-shelter.html">The Shelter</a><a class="nav-cta" data-nav="join" href="join-the-storm.html">Join</a></nav></div></header><main><section class="page-hero"><div class="shell"><span class="eyebrow">Storm Channel</span><h1>Live From<br><span>The Eye.</span></h1><p>Games, lightning strikes, defensive plays, pitching, development, and behind-the-Storm moments.</p></div></section>
+<section class="section">
+  <div class="shell">
+    <div class="gc-channel-window">
+      <div class="gc-channel-copy">
+        <span class="eyebrow">Official Storm Game Center</span>
+        <h2>Follow the Storm Live.</h2>
+        <p>Open the official 2 Out Storm 10U GameChanger page for live scoring, game schedules, results, team updates, and GameChanger coverage.</p>
+        <div class="gc-channel-facts">
+          <span>LIVE SCORING</span>
+          <span>SCHEDULE</span>
+          <span>RESULTS</span>
+          <span>TEAM UPDATES</span>
+        </div>
+      </div>
+      <div class="gc-channel-actions">
+        <span class="storm-label">GameChanger</span>
+        <strong>2 Out Storm 10U</strong>
+        <p>This is a public link to the official team GameChanger page. No Family Portal login is required.</p>
+        <a class="button orange" data-gamechanger-team href="https://web.gc.com/teams/k7Ir88y2JrCI?utm_source=Web&utm_campaign=team_share_link" target="_blank" rel="noopener">Open GameChanger</a>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="section"><div class="shell"><div id="video-filters" class="filters"></div><div id="featured-video"></div><div id="video-grid" class="video-grid section-gap"></div></div></section></main><footer class="footer"><div class="shell footer-grid"><div><img data-brand-logo src="assets/img/storm-logo.svg" alt="2 Out Storm"><p><span data-team-tagline>Together. Tougher.</span> <span class="muted">The Storm Is Building.</span></p><small>© <span data-year></span> <span data-team-name>2 Out Storm 10U</span></small></div><div class="footer-links"><a href="storm-channel.html">Storm Channel</a><a data-app-link="family" href="#">Family Portal</a><a data-app-link="admin" href="#">Coach Control Center</a><a href="website-guide.html">? Website Guide</a><a data-sms="Hi Coach, I have a question about the team." href="#">Contact Coach</a></div></div></footer><script src="assets/js/config.js"></script><script src="assets/js/fallback-data.js"></script><script src="assets/js/api.js"></script><script src="assets/js/site.js?v=gamechanger-public-1"></script></body></html>

@@ -214,7 +214,7 @@ function videoThumb(v){
 function videoCard(v,featured=false){const src=videoSource(v);return `<article class="${featured?'featured-video-card':'video-card'}"><a class="video-thumb" href="${esc(src)}" target="_blank" rel="noopener"><img loading="lazy" decoding="async" src="${esc(videoThumb(v))}" alt="${esc(v.Title)}"><span class="play">▶</span>${featured?'<span class="featured-ribbon">Featured Broadcast</span>':''}</a><div class="video-copy"><span class="storm-label">${esc(v.Category||'Storm Channel')}</span><h3>${esc(v.Title||'Storm Video')}</h3><p>${esc(v.Description||'')}</p>${src?`<a class="button small" href="${esc(src)}" target="_blank" rel="noopener">Watch</a>`:''}</div></article>`;}
 function applyBrand(){const s=settings();const root=document.documentElement;[['--purple',s.brandPrimary],['--purple2',s.brandSecondary],['--orange',s.brandAccent],['--ink',s.brandDark]].forEach(([k,v])=>{if(v)root.style.setProperty(k,v)});$$('[data-team-name]').forEach(el=>el.textContent=val(s.teamName,'2 Out Storm 10U'));$$('[data-team-short]').forEach(el=>el.textContent=val(s.teamShort,'2 Out'));$$('[data-team-tagline]').forEach(el=>el.textContent=val(s.tagline,'Together. Tougher.'));$$('[data-age-group]').forEach(el=>el.textContent=val(s.ageGroup,'10U'));$$('[data-home-field]').forEach(el=>el.textContent=val(s.homeField,'CAP'));$$('[data-brand-logo]').forEach(el=>el.src=imageUrl(s.logoURL,window.STORM_CONFIG?.fallbackLogo||'assets/img/storm-logo.svg'));$$('[data-hero-copy]').forEach(el=>el.textContent=val(s.heroCopy,el.textContent));$$('[data-hero-image]').forEach(el=>{const u=s.heroImageURL||s.homeHeroImageURL||s.featureImageURL||'';if(u)el.src=u;});$$('[data-year]').forEach(el=>el.textContent=new Date().getFullYear());document.title=document.title.replace('2 Out Storm 10U',val(s.teamName,'2 Out Storm 10U'));}
 function wireImmediateNav(){const btn=$('.nav-toggle'),nav=$('.nav-links');if(!btn||!nav||btn.dataset.stormNavWired==='1')return;btn.dataset.stormNavWired='1';btn.addEventListener('click',e=>{const open=nav.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(open));});}
-function wireLinks(){$$('[data-app-link]').forEach(a=>{const page=a.dataset.appLink;a.href=StormAPI.appUrl(page);if(!StormAPI.hasApi()){a.classList.add('needs-setup');a.addEventListener('click',e=>{e.preventDefault();alert('Website backend connection needed. Paste the deployed Apps Script /exec URL into assets/js/config.js.');});}});$$('[data-form]').forEach(a=>{const u=settings()[a.dataset.form];if(u&&u!=='#')a.href=u;else{a.href='#';a.addEventListener('click',e=>{e.preventDefault();alert('This form link has not been configured yet. The coach can create/repair forms in the Coach Control Center.');});}});$$('[data-sms]').forEach(a=>{const phone=(settings().phone||'').replace(/[^+\d]/g,'');if(phone)a.href=`sms:${phone}?body=${encodeURIComponent(a.dataset.sms||'Hi Coach')}`;});wireImmediateNav();const key=document.body.dataset.page;const navKey={player:'team',event:'tracker',family:'shelter',coach:'shelter',guide:'shelter'}[key]||key;const current=$(`[data-nav="${navKey}"]`);if(current)current.classList.add('active');}
+function wireLinks(){$$('[data-app-link]').forEach(a=>{const page=a.dataset.appLink;a.href=StormAPI.appUrl(page);if(!StormAPI.hasApi()){a.classList.add('needs-setup');a.addEventListener('click',e=>{e.preventDefault();alert('Website backend connection needed. Paste the deployed Apps Script /exec URL into assets/js/config.js.');});}});$$('[data-form]').forEach(a=>{const u=settings()[a.dataset.form];if(u&&u!=='#')a.href=u;else{a.href='#';a.addEventListener('click',e=>{e.preventDefault();alert('This form link has not been configured yet. The coach can create/repair forms in the Coach Control Center.');});}});$$('[data-gamechanger-team]').forEach(a=>{const u=String(settings().gamechanger||'https://web.gc.com/teams/k7Ir88y2JrCI?utm_source=Web&utm_campaign=team_share_link').trim();if(u)a.href=u;});$$('[data-sms]').forEach(a=>{const phone=(settings().phone||'').replace(/[^+\d]/g,'');if(phone)a.href=`sms:${phone}?body=${encodeURIComponent(a.dataset.sms||'Hi Coach')}`;});wireImmediateNav();const key=document.body.dataset.page;const navKey={player:'team',event:'tracker',family:'shelter',coach:'shelter',guide:'shelter'}[key]||key;const current=$(`[data-nav="${navKey}"]`);if(current)current.classList.add('active');}
 function upcoming(){const now=new Date();return arr('calendar').filter(e=>{const d=eventDateTime(e);return d&&d.getTime()>=now.getTime()-3600000;}).sort((a,b)=>eventDateTime(a)-eventDateTime(b));}
 let timer;
 function renderCountdown(e){const box=$('#countdown');if(!box)return;clearInterval(timer);function tick(){const d=eventDateTime(e),diff=Math.max(0,d-new Date()),days=Math.floor(diff/86400000),hrs=Math.floor(diff%86400000/3600000),mins=Math.floor(diff%3600000/60000),secs=Math.floor(diff%60000/1000);box.innerHTML=[[days,'Days'],[hrs,'Hours'],[mins,'Minutes'],[secs,'Seconds']].map(x=>`<div><strong>${String(x[0]).padStart(2,'0')}</strong><span>${x[1]}</span></div>`).join('');}tick();timer=setInterval(tick,1000);}
@@ -574,7 +574,88 @@ function drawHomeCalendar(){
   if(grid)grid.innerHTML=cells.join('');
 }
 
-function renderHome(){const next=upcoming()[0];const n=$('#next-impact');if(n){n.innerHTML=next?`<div class="impact-date"><strong>${esc(dateLabel(next.Date,{month:'short',day:'numeric'}))}</strong><span>${esc(next.Time||'TBD')}</span></div><div class="impact-main"><span class="kicker">${esc(next.Status||'Next Impact')}</span><h3>${esc(next.Title||next.Type)}</h3><p>${esc(next.Opponent?`vs. ${next.Opponent} · `:'')}${esc(next.Location||'Location TBD')}${next.Field?` · ${esc(next.Field)}`:''}</p><div class="impact-meta">${next.ArrivalTime?`<span class="pill">Arrive ${esc(next.ArrivalTime)}</span>`:''}${next.Uniform?`<span class="pill">${esc(next.Uniform)}</span>`:''}<span class="pill orange">${esc(next.Type||'Event')}</span></div></div><a class="button primary" href="event-details.html?id=${encodeURIComponent(next.EventID)}">View Details</a>`:'<div class="empty-state">No upcoming events are published yet.</div>';if(next)renderCountdown(next);}const announcements=arr('announcements').filter(a=>String(a.Visibility||'PUBLIC').toUpperCase()!=='FAMILY').slice(0,3);if($('#announcements'))$('#announcements').innerHTML=announcements.length?announcements.map(announcementCard).join(''):'<div class="empty-state">No current Storm Warnings.</div>';const feat=arr('videos').find(v=>yes(v.Featured))||arr('videos')[0];if($('#featured-video'))$('#featured-video').innerHTML=feat?videoCard(feat,true):'<div class="empty-state">Storm Channel is warming up.</div>';if($('#players-grid'))$('#players-grid').innerHTML=arr('players').map(playerCard).join('');const t=arr('tryouts').filter(x=>!['CLOSED','COMPLETED','FULL'].includes(String(x.Status||'').toUpperCase())).sort((a,b)=>parseDate(a.Date)-parseDate(b.Date))[0];if($('#home-tryout'))$('#home-tryout').innerHTML=t?tryoutCard(t):'<div class="empty-state">No active tryouts are posted right now. Player Interest remains open.</div>';const w=arr('homeworkWeeks').find(x=>String(x.Status||'').toUpperCase()==='ACTIVE')||arr('homeworkWeeks')[0];if($('#home-homework'))$('#home-homework').innerHTML=w?`<div class="homework-public-card"><span class="kicker">${esc(w.Title)}</span><h3>${esc(w.Theme||'The work continues.')}</h3><p>${esc(w.CoachMessage||'')}</p><div class="impact-meta"><span class="pill">Due ${esc(dateLabel(w.DueDate,{month:'short',day:'numeric'}))}</span><span class="pill orange">Parent code required to submit</span></div><div class="hero-actions"><a class="button primary" href="${StormAPI.appUrl('family')}">Open My Homework</a></div></div>`:'';const pic=arr('picture')[0];if($('#picture-week'))$('#picture-week').innerHTML=pic?`<div class="picture"><img loading="lazy" decoding="async" src="${esc(imageUrl(pic.ImageURL))}" alt="${esc(pic.Title||'Picture of the Week')}"></div><div class="picture-copy"><span class="kicker">${esc(pic.Week||'Storm Season')}</span><h3>${esc(pic.Title||'Picture of the Week')}</h3><p>${esc(pic.Caption||'')}</p></div>`:'<div class="empty-state">Picture of the Week coming soon.</div>';ensureFamilyBoard();drawHomeCalendar();}
+let HOME_RENDER_TOKEN=0;
+
+function runWhenIdle(fn,timeout=500){
+  if('requestIdleCallback' in window){
+    requestIdleCallback(()=>fn(),{timeout});
+  }else{
+    setTimeout(fn,0);
+  }
+}
+
+function renderHomeCritical(){
+  const next=upcoming()[0];
+  const n=$('#next-impact');
+
+  if(n){
+    n.innerHTML=next
+      ? `<div class="impact-date"><strong>${esc(dateLabel(next.Date,{month:'short',day:'numeric'}))}</strong><span>${esc(next.Time||'TBD')}</span></div><div class="impact-main"><span class="kicker">${esc(next.Status||'Next Impact')}</span><h3>${esc(next.Title||next.Type)}</h3><p>${esc(next.Opponent?`vs. ${next.Opponent} · `:'')}${esc(next.Location||'Location TBD')}${next.Field?` · ${esc(next.Field)}`:''}</p><div class="impact-meta">${next.ArrivalTime?`<span class="pill">Arrive ${esc(next.ArrivalTime)}</span>`:''}${next.Uniform?`<span class="pill">${esc(next.Uniform)}</span>`:''}<span class="pill orange">${esc(next.Type||'Event')}</span></div></div><a class="button primary" href="event-details.html?id=${encodeURIComponent(next.EventID)}">View Details</a>`
+      : '<div class="empty-state">No upcoming events are published yet.</div>';
+
+    if(next)renderCountdown(next);
+  }
+
+  const announcements=arr('announcements')
+    .filter(a=>String(a.Visibility||'PUBLIC').toUpperCase()!=='FAMILY')
+    .slice(0,3);
+
+  if($('#announcements')){
+    $('#announcements').innerHTML=announcements.length
+      ? announcements.map(announcementCard).join('')
+      : '<div class="empty-state">No current Storm Warnings.</div>';
+  }
+}
+
+function renderHomeDeferred(token){
+  if(token!==HOME_RENDER_TOKEN || document.body.dataset.page!=='home')return;
+
+  injectStormEnhancementStyles();
+
+  const feat=arr('videos').find(v=>yes(v.Featured))||arr('videos')[0];
+  if($('#featured-video')){
+    $('#featured-video').innerHTML=feat
+      ? videoCard(feat,true)
+      : '<div class="empty-state">Storm Channel is warming up.</div>';
+  }
+
+  if($('#players-grid')){
+    $('#players-grid').innerHTML=arr('players').slice(0,4).map(playerCard).join('');
+  }
+
+  const t=arr('tryouts')
+    .filter(x=>!['CLOSED','COMPLETED','FULL'].includes(String(x.Status||'').toUpperCase()))
+    .sort((a,b)=>parseDate(a.Date)-parseDate(b.Date))[0];
+
+  if($('#home-tryout')){
+    $('#home-tryout').innerHTML=t
+      ? tryoutCard(t)
+      : '<div class="empty-state">No active tryouts are posted right now. Player Interest remains open.</div>';
+  }
+
+  const w=arr('homeworkWeeks').find(x=>String(x.Status||'').toUpperCase()==='ACTIVE')||arr('homeworkWeeks')[0];
+  if($('#home-homework')){
+    $('#home-homework').innerHTML=w
+      ? `<div class="homework-public-card"><span class="kicker">${esc(w.Title)}</span><h3>${esc(w.Theme||'The work continues.')}</h3><p>${esc(w.CoachMessage||'')}</p><div class="impact-meta"><span class="pill">Due ${esc(dateLabel(w.DueDate,{month:'short',day:'numeric'}))}</span><span class="pill orange">Parent code required to submit</span></div><div class="hero-actions"><a class="button primary" href="${StormAPI.appUrl('family')}">Open My Homework</a></div></div>`
+      : '';
+  }
+
+  const pic=arr('picture')[0];
+  if($('#picture-week')){
+    $('#picture-week').innerHTML=pic
+      ? `<div class="picture"><img loading="lazy" decoding="async" fetchpriority="low" src="${esc(imageUrl(pic.ImageURL))}" alt="${esc(pic.Title||'Picture of the Week')}"></div><div class="picture-copy"><span class="kicker">${esc(pic.Week||'Storm Season')}</span><h3>${esc(pic.Title||'Picture of the Week')}</h3><p>${esc(pic.Caption||'')}</p></div>`
+      : '<div class="empty-state">Picture of the Week coming soon.</div>';
+  }
+
+  ensureFamilyBoard();
+  drawHomeCalendar();
+}
+
+function renderHome(){
+  const token=++HOME_RENDER_TOKEN;
+  renderHomeCritical();
+  runWhenIdle(()=>renderHomeDeferred(token),350);
+}
 function renderTeam(){const g=$('#players-grid');if(g)g.innerHTML=arr('players').sort((a,b)=>(+a.SortOrder||99)-(+b.SortOrder||99)).map(playerCard).join('')||'<div class="empty-state">Roster coming soon.</div>';}
 function renderPlayer(){const id=new URLSearchParams(location.search).get('id');const p=arr('players').find(x=>String(x.PlayerID)===String(id))||arr('players')[0];const el=$('#player-profile');if(!p||!el){if(el)el.innerHTML='<div class="empty-state">Player profile not found.</div>';return;}const x=val(p.ProfileX,50),y=val(p.ProfileY,35),z=val(p.ProfileZoom,1);el.innerHTML=`<section class="profile-hero"><div class="profile-photo" style="--px:${x}%;--py:${y}%;--pz:${z}"><img decoding="async" fetchpriority="high" src="${esc(imageUrl(p.BackgroundURL||p.PhotoURL))}" alt="${esc(p.FirstName)}"></div><div class="shell profile-copy"><span class="profile-number">#${esc(p.Jersey)}</span><h1>${esc(p.FirstName)}</h1><p>${esc(p.Positions||'Storm Athlete')} · ${esc(p.BatsThrows||'')}</p></div></section><section class="section"><div class="shell profile-grid"><article class="glass-card"><span class="kicker">Her Role in the Storm</span><h3>${esc(p.Positions||'Athlete')}</h3><p>${esc(p.StrongestPart||'Development in progress.')}</p></article><article class="glass-card"><span class="kicker">Her Forecast</span><h3>Season Goal</h3><p>${esc(p.SeasonGoal||'Get better every week.')}</p></article><article class="glass-card"><span class="kicker">Player Card</span><dl class="profile-facts"><div><dt>Jersey</dt><dd>#${esc(p.Jersey)}</dd></div><div><dt>Positions</dt><dd>${esc(p.Positions||'')}</dd></div><div><dt>Bats / Throws</dt><dd>${esc(p.BatsThrows||'')}</dd></div><div><dt>Class</dt><dd>${esc(p.ClassYear||'')}</dd></div></dl></article><article class="glass-card"><span class="kicker">Storm Mindset</span><h3>“${esc(p.Quote||'Together. Tougher.')}”</h3></article></div></section>${playerStatsSection(p)}${playerHighlightsSection(p)}`;}
 function renderTracker(){const list=$('#events-list'), filters=$('#event-filters');if(!list)return;const data=arr('calendar').sort((a,b)=>eventDateTime(a)-eventDateTime(b));const types=['All',...new Set(data.map(e=>e.Type).filter(Boolean))];if(filters){filters.innerHTML=types.map((t,i)=>`<button class="filter-chip ${i===0?'active':''}" data-filter="${esc(t)}">${esc(t)}</button>`).join('');filters.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;$$('.filter-chip',filters).forEach(x=>x.classList.remove('active'));b.classList.add('active');const f=b.dataset.filter;list.innerHTML=data.filter(x=>f==='All'||x.Type===f).map(eventCard).join('')||'<div class="empty-state">No matching events.</div>';});}list.innerHTML=data.map(eventCard).join('')||'<div class="empty-state">No events published.</div>';}
@@ -593,7 +674,11 @@ function init(){
   wireImmediateNav();
   DATA=window.STORM_FALLBACK||{};
   applyBrand();
-  injectStormEnhancementStyles();
+
+  // The big calendar / Family Board enhancement CSS is below the fold on home.
+  // Other pages keep the existing immediate styling behavior.
+  if(document.body.dataset.page!=='home')injectStormEnhancementStyles();
+
   wireLinks();
 
   StormAPI.publicData().then(applyLiveData).catch(()=>showConnectionBanner());
