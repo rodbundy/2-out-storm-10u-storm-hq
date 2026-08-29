@@ -30,8 +30,10 @@ function imageUrl(v,f='assets/img/storm-logo.svg',width){
 
     // Current Storm HQ photo delivery format:
     // https://lh3.googleusercontent.com/d/FILE_ID=w1600
+    // Replace an existing width suffix instead of appending a second one.
     if(host==='lh3.googleusercontent.com' && /^\/d\//.test(u.pathname)){
-      return u.origin+u.pathname+'=w'+w;
+      const cleanPath=u.pathname.replace(/=w\d+(?:-[a-z0-9-]+)?$/i,'');
+      return u.origin+cleanPath+'=w'+w;
     }
   }catch(e){}
 
@@ -43,16 +45,32 @@ function statForPlayer(p){
   return arr('playerStats').find(s=>String(s.PlayerID)===String(p.PlayerID))||null;
 }
 function statValue(v,f='—'){return v===undefined||v===null||v===''?f:String(v);}
+function isPitcherPlayer(p){
+  const pos=String(p?.Positions||'').trim();
+  if(!pos)return false;
+  return /\bpitch(?:er)?\b/i.test(pos) || /(^|[\s,;/|])P($|[\s,;/|])/i.test(pos);
+}
+function statThousandth(v,f='—'){
+  if(v===undefined||v===null||String(v).trim()==='')return f;
+  const n=Number(v);
+  if(!Number.isFinite(n))return String(v);
+  return n.toFixed(3).replace(/^0(?=\.)/,'');
+}
+function statDisplay(label,v){
+  return ['AVG','OBP','OPS','SLG','FPCT'].includes(String(label||'').toUpperCase())
+    ? statThousandth(v)
+    : statValue(v);
+}
 function hasStat(v){return !(v===undefined||v===null||v==='');}
 function playerStatLine(p){
   const s=statForPlayer(p);
   if(!s)return '';
-  const batting=[['AVG',s.Bat_AVG],['OBP',s.Bat_OBP],['OPS',s.Bat_OPS],['RBI',s.Bat_RBI]];
+  const batting=[['AVG',s.Bat_AVG],['OBP',s.Bat_OBP],['OPS',s.Bat_OPS],['SLG',s.Bat_SLG]];
   const pitching=[['ERA',s.Pit_ERA],['WHIP',s.Pit_WHIP],['K',s.Pit_SO],['IP',s.Pit_IP]];
-  const usePitching=[s.Pit_IP,s.Pit_ERA,s.Pit_WHIP,s.Pit_SO].some(hasStat);
+  const usePitching=isPitcherPlayer(p) && [s.Pit_IP,s.Pit_ERA,s.Pit_WHIP,s.Pit_SO].some(hasStat);
   const stats=(usePitching?pitching:batting).filter(x=>hasStat(x[1])).slice(0,4);
   if(!stats.length)return '';
-  return `<div class="player-card-stats">${stats.map(([k,v])=>`<span><b>${esc(k)}</b><strong>${esc(statValue(v))}</strong></span>`).join('')}</div>`;
+  return `<div class="player-card-stats">${stats.map(([k,v])=>`<span><b>${esc(k)}</b><strong>${esc(statDisplay(k,v))}</strong></span>`).join('')}</div>`;
 }
 function playerStatsSection(p){
   const s=statForPlayer(p),gc=(s&&s.GameChangerURL)||p.GameChangerURL||'';
@@ -62,14 +80,14 @@ function playerStatsSection(p){
     ['H',s.Bat_H],['2B',s.Bat_2B],['3B',s.Bat_3B],['HR',s.Bat_HR],
     ['RBI',s.Bat_RBI],['R',s.Bat_R],['BB',s.Bat_BB],['SO',s.Bat_SO],['SB',s.Bat_SB]
   ].filter(x=>hasStat(x[1])):[];
-  const pitching=s?[
+  const pitching=(s&&isPitcherPlayer(p))?[
     ['IP',s.Pit_IP],['ERA',s.Pit_ERA],['WHIP',s.Pit_WHIP],['K',s.Pit_SO],
     ['W',s.Pit_W],['L',s.Pit_L],['BB',s.Pit_BB],['H',s.Pit_H],['ER',s.Pit_ER]
   ].filter(x=>hasStat(x[1])):[];
   const fielding=s?[
     ['FPCT',s.Fld_FPCT],['TC',s.Fld_TC],['PO',s.Fld_PO],['A',s.Fld_A],['E',s.Fld_E]
   ].filter(x=>hasStat(x[1])):[];
-  const grid=(title,items)=>items.length?`<article class="glass-card storm-stat-card"><span class="kicker">${esc(title)}</span><div class="storm-stat-grid">${items.map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(statValue(v))}</strong></div>`).join('')}</div></article>`:'';
+  const grid=(title,items)=>items.length?`<article class="glass-card storm-stat-card"><span class="kicker">${esc(title)}</span><div class="storm-stat-grid">${items.map(([k,v])=>`<div><span>${esc(k)}</span><strong>${esc(statDisplay(k,v))}</strong></div>`).join('')}</div></article>`:'';
   return `<section class="section storm-player-stats"><div class="shell"><div class="section-heading"><div><span class="kicker">GameChanger</span><h2>Season Stats</h2></div><p>Current season snapshot imported by the coaching staff.</p></div><div class="profile-grid">${grid('Batting',batting)}${grid('Pitching',pitching)}${grid('Fielding',fielding)}${gc?`<article class="glass-card storm-stat-card"><span class="kicker">GameChanger</span><h3>Full Player Stats</h3><p>Open this player's GameChanger page for the complete live stat view.</p><a class="button orange" href="${esc(gc)}" target="_blank" rel="noopener">View on GameChanger</a></article>`:''}</div></div></section>`;
 }
 function playerHighlightsSection(p){
