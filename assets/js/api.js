@@ -12,11 +12,11 @@
   const LEGACY_CACHE_KEY='stormhq_public_v1';
 
   // Fresh data can be used without any network request.
-  const FRESH_MS=5*60*1000;          // 5 minutes
+  const FRESH_MS=60*1000;            // 1 minute
 
   // Older successful public data may still paint the page immediately while
   // a fresh copy is fetched in the background.
-  const STALE_MAX_MS=6*60*60*1000;   // 6 hours
+  const STALE_MAX_MS=7*24*60*60*1000; // 7 days
 
   let memoryCache=null;
   let inFlight=null;
@@ -186,7 +186,7 @@
       s.src=u.toString();
       document.head.appendChild(s);
 
-      timeout=setTimeout(()=>finish(backendUnavailable()),12000);
+      timeout=setTimeout(()=>finish(backendUnavailable()),10000);
     });
 
     return inFlight;
