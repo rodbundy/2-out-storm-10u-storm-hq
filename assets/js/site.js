@@ -126,6 +126,14 @@ function injectStormEnhancementStyles(){
     .storm-stat-grid span{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:3px}
     .storm-stat-grid strong{font-size:20px;color:#fff}
     .storm-stat-card{min-height:100%}
+    .storm-past-events-archive{margin-top:22px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:20px;background:rgba(255,255,255,.025);overflow:hidden}
+    .storm-past-events-archive>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;cursor:pointer;font-weight:900;letter-spacing:.02em;color:#fff;list-style:none}
+    .storm-past-events-archive>summary::-webkit-details-marker{display:none}
+    .storm-past-events-archive>summary strong{display:grid;place-items:center;min-width:34px;height:28px;padding:0 9px;border-radius:999px;background:rgba(255,107,37,.14);border:1px solid rgba(255,107,37,.35);color:var(--orange)}
+    .storm-past-events-copy{padding:0 20px 14px;color:var(--muted);font-size:13px}
+    .storm-past-events-archive [data-archive-events]{display:grid;gap:12px;padding:0 14px 16px}
+    .storm-past-events-archive .event-card{opacity:.9}
+
     .storm-family-board{margin-top:22px}
     .storm-board-card{position:relative;overflow:hidden;padding:24px;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:linear-gradient(145deg,rgba(19,12,31,.97),rgba(47,20,72,.91));box-shadow:0 24px 70px rgba(0,0,0,.32)}
     .storm-board-card:after{content:"";position:absolute;width:330px;height:330px;left:-160px;bottom:-190px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,37,.16),transparent 69%);pointer-events:none}
@@ -271,6 +279,15 @@ function applyBrand(){const s=settings();const root=document.documentElement;[['
 function wireImmediateNav(){const btn=$('.nav-toggle'),nav=$('.nav-links');if(!btn||!nav||btn.dataset.stormNavWired==='1')return;btn.dataset.stormNavWired='1';btn.addEventListener('click',e=>{const open=nav.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',String(open));});}
 function wireLinks(){$$('[data-app-link]').forEach(a=>{const page=a.dataset.appLink;a.href=StormAPI.appUrl(page);if(!StormAPI.hasApi()){a.classList.add('needs-setup');a.addEventListener('click',e=>{e.preventDefault();alert('Website backend connection needed. Paste the deployed Apps Script /exec URL into assets/js/config.js.');});}});$$('[data-form]').forEach(a=>{const u=settings()[a.dataset.form];if(u&&u!=='#')a.href=u;else{a.href='#';a.addEventListener('click',e=>{e.preventDefault();alert('This form link has not been configured yet. The coach can create/repair forms in the Coach Control Center.');});}});$$('[data-gamechanger-team]').forEach(a=>{const u=String(settings().gamechanger||'https://web.gc.com/teams/k7Ir88y2JrCI?utm_source=Web&utm_campaign=team_share_link').trim();if(u)a.href=u;});$$('[data-sms]').forEach(a=>{const phone=(settings().phone||'').replace(/[^+\d]/g,'');if(phone)a.href=`sms:${phone}?body=${encodeURIComponent(a.dataset.sms||'Hi Coach')}`;});wireImmediateNav();const key=document.body.dataset.page;const navKey={player:'team',event:'tracker',family:'shelter',coach:'shelter',guide:'shelter'}[key]||key;const current=$(`[data-nav="${navKey}"]`);if(current)current.classList.add('active');}
 function upcoming(){const now=new Date();return arr('calendar').filter(e=>{const d=eventDateTime(e);return d&&d.getTime()>=now.getTime()-3600000;}).sort((a,b)=>eventDateTime(a)-eventDateTime(b));}
+function publicEventIsPast(e){
+  const d=parseDate(e?.Date);
+  if(!d)return false;
+  d.setHours(0,0,0,0);
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  return d<today;
+}
+
 let timer;
 function renderCountdown(e){const box=$('#countdown');if(!box)return;clearInterval(timer);function tick(){const d=eventDateTime(e),diff=Math.max(0,d-new Date()),days=Math.floor(diff/86400000),hrs=Math.floor(diff%86400000/3600000),mins=Math.floor(diff%3600000/60000),secs=Math.floor(diff%60000/1000);box.innerHTML=[[days,'Days'],[hrs,'Hours'],[mins,'Minutes'],[secs,'Seconds']].map(x=>`<div><strong>${String(x[0]).padStart(2,'0')}</strong><span>${x[1]}</span></div>`).join('');}tick();timer=setInterval(tick,1000);}
 
@@ -586,7 +603,7 @@ function drawHomeCalendar(){
   const today=new Date();
   const events=arr('calendar')
     .map(e=>({e,d:parseDate(e.Date)}))
-    .filter(x=>x.d && x.d>=monthStart && x.d<nextMonth)
+    .filter(x=>x.d && x.d>=monthStart && x.d<nextMonth && !publicEventIsPast(x.e))
     .sort((a,b)=>a.d-b.d || eventDateTime(a.e)-eventDateTime(b.e));
 
   const byDay={};
@@ -713,7 +730,52 @@ function renderHome(){
 }
 function renderTeam(){const g=$('#players-grid');if(g)g.innerHTML=arr('players').sort((a,b)=>(+a.SortOrder||99)-(+b.SortOrder||99)).map(p=>playerCard(p,true)).join('')||'<div class="empty-state">Roster coming soon.</div>';}
 function renderPlayer(){const id=new URLSearchParams(location.search).get('id');const p=arr('players').find(x=>String(x.PlayerID)===String(id))||arr('players')[0];const el=$('#player-profile');if(!p||!el){if(el)el.innerHTML='<div class="empty-state">Player profile not found.</div>';return;}const x=val(p.ProfileX,50),y=val(p.ProfileY,35),z=val(p.ProfileZoom,1);el.innerHTML=`<section class="profile-hero"><div class="profile-photo" style="--px:${x}%;--py:${y}%;--pz:${z}"><img decoding="async" fetchpriority="high" src="${esc(imageUrl(p.BackgroundURL||p.PhotoURL,'assets/img/storm-logo.svg',1400))}" alt="${esc(p.FirstName)}">${publicStormBadges(p)}</div><div class="shell profile-copy"><span class="profile-number">#${esc(p.Jersey)}</span><h1>${esc(p.FirstName)}</h1><p>${esc(p.Positions||'Storm Athlete')} · ${esc(p.BatsThrows||'')}</p></div></section><section class="section"><div class="shell profile-grid"><article class="glass-card"><span class="kicker">Her Role in the Storm</span><h3>${esc(p.Positions||'Athlete')}</h3><p>${esc(p.StrongestPart||'Development in progress.')}</p></article><article class="glass-card"><span class="kicker">Her Forecast</span><h3>Season Goal</h3><p>${esc(p.SeasonGoal||'Get better every week.')}</p></article><article class="glass-card"><span class="kicker">Player Card</span><dl class="profile-facts"><div><dt>Jersey</dt><dd>#${esc(p.Jersey)}</dd></div><div><dt>Positions</dt><dd>${esc(p.Positions||'')}</dd></div><div><dt>Bats / Throws</dt><dd>${esc(p.BatsThrows||'')}</dd></div><div><dt>Class</dt><dd>${esc(p.ClassYear||'')}</dd></div></dl></article><article class="glass-card"><span class="kicker">Storm Mindset</span><h3>“${esc(p.Quote||'Together. Tougher.')}”</h3></article></div></section>${playerStatsSection(p)}${playerHighlightsSection(p)}`;}
-function renderTracker(){const list=$('#events-list'), filters=$('#event-filters');if(!list)return;const data=arr('calendar').sort((a,b)=>eventDateTime(a)-eventDateTime(b));const types=['All',...new Set(data.map(e=>e.Type).filter(Boolean))];if(filters){filters.innerHTML=types.map((t,i)=>`<button class="filter-chip ${i===0?'active':''}" data-filter="${esc(t)}">${esc(t)}</button>`).join('');filters.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;$$('.filter-chip',filters).forEach(x=>x.classList.remove('active'));b.classList.add('active');const f=b.dataset.filter;list.innerHTML=data.filter(x=>f==='All'||x.Type===f).map(eventCard).join('')||'<div class="empty-state">No matching events.</div>';});}list.innerHTML=data.map(eventCard).join('')||'<div class="empty-state">No events published.</div>';}
+function ensurePastEventArchive(){
+  const list=$('#events-list');
+  if(!list)return null;
+  let host=$('#past-events-archive');
+  if(host)return host;
+  host=document.createElement('details');
+  host.id='past-events-archive';
+  host.className='storm-past-events-archive';
+  host.innerHTML=`<summary><span>🗃 Past Events Archive</span><strong data-archive-count>0</strong></summary><div class="storm-past-events-copy">Completed games, practices, tournaments, and team events are kept here instead of cluttering the active schedule.</div><div data-archive-events></div>`;
+  list.insertAdjacentElement('afterend',host);
+  return host;
+}
+function renderTracker(){
+  const list=$('#events-list'),filters=$('#event-filters');
+  if(!list)return;
+  const all=[...arr('calendar')].sort((a,b)=>eventDateTime(a)-eventDateTime(b));
+  const current=all.filter(e=>!publicEventIsPast(e));
+  const past=all.filter(publicEventIsPast).sort((a,b)=>eventDateTime(b)-eventDateTime(a));
+  const archive=ensurePastEventArchive();
+  const types=['All',...new Set(all.map(e=>e.Type).filter(Boolean))];
+
+  function draw(filter){
+    const activeRows=current.filter(x=>filter==='All'||x.Type===filter);
+    const archivedRows=past.filter(x=>filter==='All'||x.Type===filter);
+    list.innerHTML=activeRows.map(eventCard).join('')||'<div class="empty-state">No current or upcoming events in this category.</div>';
+    if(archive){
+      const count=archive.querySelector('[data-archive-count]');
+      const body=archive.querySelector('[data-archive-events]');
+      if(count)count.textContent=String(archivedRows.length);
+      if(body)body.innerHTML=archivedRows.map(eventCard).join('')||'<div class="empty-state">No past events in this category.</div>';
+      archive.style.display=past.length?'block':'none';
+    }
+  }
+
+  if(filters){
+    filters.innerHTML=types.map((t,i)=>`<button class="filter-chip ${i===0?'active':''}" data-filter="${esc(t)}">${esc(t)}</button>`).join('');
+    filters.onclick=e=>{
+      const b=e.target.closest('[data-filter]');
+      if(!b)return;
+      $$('.filter-chip',filters).forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      draw(b.dataset.filter);
+    };
+  }
+  draw('All');
+}
 function renderEvent(){const id=new URLSearchParams(location.search).get('id'),e=arr('calendar').find(x=>String(x.EventID)===String(id));const wrap=$('#event-details');if(!wrap)return;if(!e){wrap.innerHTML='<section class="page-hero"><div class="shell"><h1>Event Not Found</h1></div></section>';return;}const roster=arr('eventRosters').filter(r=>String(r.EventID)===String(id)&&yes(r.Assigned!==undefined?r.Assigned:'YES'));const playerById=Object.fromEntries(arr('players').map(p=>[String(p.PlayerID),p]));const groups=[...new Set(roster.map(r=>r.Group||'Event Group'))];const rosterHtml=groups.length?groups.map(g=>{const rs=roster.filter(r=>(r.Group||'Event Group')===g);return `<div class="event-group"><div class="event-group-head"><span class="kicker">${esc(g)}</span><strong>${rs.length} players</strong></div><div class="event-roster-grid">${rs.map(r=>{const p=playerById[String(r.PlayerID)]||{};return `<div class="event-player"><div class="avatar"><img loading="lazy" decoding="async" fetchpriority="low" src="${esc(imageUrl(p.PhotoURL,'assets/img/storm-logo.svg',220))}" alt="${esc(p.FirstName||r.PlayerName||'Player')}"></div><div><strong>#${esc(p.Jersey||'')} ${esc(p.FirstName||r.PlayerName||'Player')}</strong><span>${esc(p.Positions||'Storm Athlete')}</span><small>${esc(r.Notes||'')}</small></div></div>`;}).join('')}</div></div>`;}).join(''):'<div class="empty-state">The event player group is visible inside the Family Portal unless the coach publishes it publicly.</div>';wrap.innerHTML=`<section class="event-detail-hero"><div class="shell event-detail-grid"><div><span class="eyebrow">${esc(e.Status||'Storm Tracker')}</span><h1>${esc(e.Title||e.Type)}${e.Opponent?`<br><span>vs. ${esc(e.Opponent)}</span>`:''}</h1><p>${esc(e.PublicNotes||e.EventNotes||'')}</p><div class="event-detail-actions"><a class="button primary" data-app-link="family" href="${StormAPI.appUrl('family',{eventId:e.EventID})}">Family Check-In</a>${String(e.Type).toLowerCase()==='game'?`<a class="button" data-app-link="lineup" href="${StormAPI.appUrl('lineup',{eventId:e.EventID})}">Coach Game Day Builder</a>`:''}${e.DirectionsURL?`<a class="button ghost" href="${esc(e.DirectionsURL)}" target="_blank">Directions</a>`:''}</div></div><div class="event-detail-facts"><div><span>Date</span><strong>${esc(dateLabel(e.Date))}</strong></div><div><span>Time</span><strong>${esc(e.Time||'TBD')}${e.EndTime?` – ${esc(e.EndTime)}`:''}</strong></div><div><span>Location</span><strong>${esc(e.Location||'TBD')}</strong></div><div><span>Field</span><strong>${esc(e.Field||'TBD')}</strong></div><div><span>Arrival</span><strong>${esc(e.ArrivalTime||'TBD')}</strong></div><div><span>Uniform</span><strong>${esc(e.Uniform||'Coach will advise')}</strong></div></div></div></section><section class="section"><div class="shell"><div class="section-heading"><div><span class="kicker">Event Group</span><h2>Who's in the Storm</h2></div><p>Coach-assigned group for this event. Availability is managed privately through each family's player code.</p></div>${rosterHtml}</div></section>${eventHighlightsSection(id)}`;wireLinks();}
 function renderTryouts(){const data=arr('tryouts').sort((a,b)=>parseDate(a.Date)-parseDate(b.Date));const html=data.map(tryoutCard).join('')||'<div class="empty-state">No tryouts are currently published.</div>';if($('#tryouts-list'))$('#tryouts-list').innerHTML=html;if($('#join-tryouts'))$('#join-tryouts').innerHTML=html;}
 function renderChannel(){const data=arr('videos');const feat=data.find(v=>yes(v.Featured))||data[0];if($('#featured-video'))$('#featured-video').innerHTML=feat?videoCard(feat,true):'';const cats=['All',...new Set(data.map(v=>v.Category).filter(Boolean))];const f=$('#video-filters'),g=$('#video-grid');function draw(c){if(g)g.innerHTML=data.filter(v=>c==='All'||v.Category===c).map(v=>videoCard(v,false)).join('')||'<div class="empty-state">No videos in this category.</div>';}if(f){f.innerHTML=cats.map((c,i)=>`<button class="filter-chip ${i===0?'active':''}" data-filter="${esc(c)}">${esc(c)}</button>`).join('');f.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;$$('.filter-chip',f).forEach(x=>x.classList.remove('active'));b.classList.add('active');draw(b.dataset.filter);});}draw('All');}
