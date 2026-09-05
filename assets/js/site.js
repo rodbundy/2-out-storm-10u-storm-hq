@@ -62,12 +62,36 @@ function statDisplay(label,v){
     : statValue(v);
 }
 function hasStat(v){return !(v===undefined||v===null||v==='');}
+function stormInningsValue(v){
+  if(v===undefined||v===null||String(v).trim()==='')return null;
+  const s=String(v).trim();
+
+  // GameChanger notation: 2.1 = 2 innings + 1 out = 2 1/3.
+  const m=s.match(/^(\d+)\.([012])$/);
+  if(m)return Number(m[1])+(Number(m[2])/3);
+
+  const n=Number(s);
+  return Number.isFinite(n)?n:null;
+}
+function stormEraValue(s){
+  if(!s)return '—';
+  const er=Number(s.Pit_ER);
+  const ip=stormInningsValue(s.Pit_IP);
+
+  // 2 Out Storm fall-ball ERA = (Earned Runs x 2) / Innings Pitched.
+  if(Number.isFinite(er) && ip!==null && ip>0){
+    return ((er*2)/ip).toFixed(3);
+  }
+
+  // Keep imported ERA only as a fallback if ER/IP are unavailable.
+  return hasStat(s.Pit_ERA)?String(s.Pit_ERA):'—';
+}
 function playerStatLine(p){
   const s=statForPlayer(p);
   if(!s)return '';
   const batting=[['AVG',s.Bat_AVG],['OBP',s.Bat_OBP],['OPS',s.Bat_OPS],['SLG',s.Bat_SLG]];
-  const pitching=[['ERA',s.Pit_ERA],['WHIP',s.Pit_WHIP],['K',s.Pit_SO],['IP',s.Pit_IP]];
-  const usePitching=isPitcherPlayer(p) && [s.Pit_IP,s.Pit_ERA,s.Pit_WHIP,s.Pit_SO].some(hasStat);
+  const pitching=[['ERA',stormEraValue(s)],['WHIP',s.Pit_WHIP],['K',s.Pit_SO],['IP',s.Pit_IP]];
+  const usePitching=isPitcherPlayer(p) && [s.Pit_IP,s.Pit_ER,s.Pit_ERA,s.Pit_WHIP,s.Pit_SO].some(hasStat);
   const stats=(usePitching?pitching:batting).filter(x=>hasStat(x[1])).slice(0,4);
   if(!stats.length)return '';
   return `<div class="player-card-stats">${stats.map(([k,v])=>`<span><b>${esc(k)}</b><strong>${esc(statDisplay(k,v))}</strong></span>`).join('')}</div>`;
@@ -81,7 +105,7 @@ function playerStatsSection(p){
     ['RBI',s.Bat_RBI],['R',s.Bat_R],['BB',s.Bat_BB],['SO',s.Bat_SO],['SB',s.Bat_SB]
   ].filter(x=>hasStat(x[1])):[];
   const pitching=(s&&isPitcherPlayer(p))?[
-    ['IP',s.Pit_IP],['ERA',s.Pit_ERA],['WHIP',s.Pit_WHIP],['K',s.Pit_SO],
+    ['IP',s.Pit_IP],['ERA',stormEraValue(s)],['WHIP',s.Pit_WHIP],['K',s.Pit_SO],
     ['W',s.Pit_W],['L',s.Pit_L],['BB',s.Pit_BB],['H',s.Pit_H],['ER',s.Pit_ER]
   ].filter(x=>hasStat(x[1])):[];
   const fielding=s?[
