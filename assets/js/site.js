@@ -110,6 +110,32 @@ function injectStormEnhancementStyles(){
   st.textContent=`
     body[data-page="home"] main>.section{content-visibility:auto;contain-intrinsic-size:700px}
 
+    .gc-eye-section{position:relative;overflow:hidden}
+    .gc-eye-section:before{content:"";position:absolute;width:520px;height:520px;right:-220px;top:-280px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,37,.14),transparent 68%);pointer-events:none}
+    .gc-eye-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.18fr) minmax(310px,.82fr);gap:18px;align-items:stretch}
+    .gc-eye-card{min-width:0;padding:20px;border:1px solid rgba(255,255,255,.12);border-radius:22px;background:linear-gradient(145deg,rgba(25,13,40,.97),rgba(8,6,13,.96));box-shadow:0 20px 60px rgba(0,0,0,.28)}
+    .gc-eye-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .gc-eye-card-head h3{margin:4px 0 0;font-size:clamp(20px,2.5vw,30px)}
+    .gc-live-dot{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;border:1px solid rgba(120,240,158,.38);background:rgba(120,240,158,.10);color:#bff8cf;font-size:9px;font-weight:900;letter-spacing:.12em}
+    .gc-live-dot:before{content:"";width:7px;height:7px;border-radius:50%;background:#78f09e;box-shadow:0 0 12px rgba(120,240,158,.85)}
+    .gc-widget-host{min-height:310px;border-radius:16px;overflow:hidden;background:#fff;color:#111}
+    .gc-widget-loading{display:grid;place-items:center;min-height:310px;padding:20px;color:#5a5262;font-size:13px;font-weight:800;text-align:center}
+    .gc-widget-error{display:grid;place-items:center;min-height:310px;padding:24px;text-align:center;background:linear-gradient(145deg,#fff,#f6f1f9);color:#3d3345}
+    .gc-widget-error strong{display:block;margin-bottom:7px;font-size:18px}
+    .gc-eye-copy{margin:-2px 0 14px;color:var(--muted);line-height:1.5}
+    .gc-video-hub{display:grid;gap:10px}
+    .gc-video-item{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:11px;align-items:center;padding:11px;border:1px solid rgba(255,255,255,.10);border-radius:14px;background:rgba(255,255,255,.035);text-decoration:none;color:#fff;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+    .gc-video-item:hover{transform:translateY(-1px);border-color:rgba(255,107,37,.48);background:rgba(255,107,37,.07)}
+    .gc-video-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:linear-gradient(145deg,#ff7a2f,#8e49d7);font-size:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+    .gc-video-main{min-width:0}
+    .gc-video-main strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+    .gc-video-main small{display:block;margin-top:3px;color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .gc-video-open{color:var(--orange);font-weight:900;font-size:12px}
+    .gc-video-empty{padding:17px;border:1px dashed rgba(255,255,255,.15);border-radius:14px;color:var(--muted);text-align:center;font-size:12px;line-height:1.5}
+    .gc-video-actions{margin-top:14px}
+    @media(max-width:900px){.gc-eye-grid{grid-template-columns:1fr}.gc-widget-host,.gc-widget-loading,.gc-widget-error{min-height:280px}}
+    @media(max-width:520px){.gc-eye-card{padding:14px}.gc-video-item{grid-template-columns:42px minmax(0,1fr) auto}.gc-video-icon{width:42px;height:42px}.gc-eye-card-head{align-items:center}}
+
     .storm-gold-badges{position:absolute;top:10px;right:10px;z-index:8;display:flex;gap:5px;align-items:center;pointer-events:none}
     .storm-gold-tornado{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,241,163,.88);background:linear-gradient(145deg,#6f4c00,#f6c845 56%,#fff0a1);box-shadow:0 3px 12px rgba(0,0,0,.38),0 0 0 2px rgba(50,23,79,.35);}
     .storm-gold-tornado svg{width:20px;height:20px;fill:#fff6bd;filter:drop-shadow(0 1px 1px rgba(96,56,0,.55))}
@@ -672,10 +698,87 @@ function renderHomeCritical(){
   }
 }
 
+
+function gameChangerTeamUrl(){
+  return String(settings().gamechanger||'https://web.gc.com/teams/k7Ir88y2JrCI?utm_source=Web&utm_campaign=team_share_link').trim();
+}
+function isGameChangerVideo(v){
+  const hay=[
+    v?.SourceType,v?.SourceLabel,v?.Category,v?.VideoURL
+  ].map(x=>String(x||'').toLowerCase()).join(' ');
+  return hay.includes('gamechanger') || /(^|\/\/)(?:www\.)?(?:web\.)?gc\.com\//i.test(String(v?.VideoURL||''));
+}
+function renderGameChangerVideoHub(){
+  const host=$('#gc-video-hub');
+  if(!host)return;
+
+  const vids=arr('videos')
+    .filter(isGameChangerVideo)
+    .sort((a,b)=>String(b.Date||'').localeCompare(String(a.Date||'')) || (Number(a.SortOrder)||99)-(Number(b.SortOrder)||99))
+    .slice(0,6);
+
+  host.innerHTML=vids.length
+    ? vids.map(v=>{
+        const url=String(v.VideoURL||gameChangerTeamUrl()).trim();
+        const meta=[v.Date,v.Opponent,v.SourceLabel||'GameChanger'].filter(Boolean).join(' · ');
+        return `<a class="gc-video-item" href="${esc(url)}" target="_blank" rel="noopener">
+          <span class="gc-video-icon">▶</span>
+          <span class="gc-video-main"><strong>${esc(v.Title||'GameChanger Highlight')}</strong><small>${esc(meta||'Open video in GameChanger')}</small></span>
+          <span class="gc-video-open">WATCH →</span>
+        </a>`;
+      }).join('')
+    : `<div class="gc-video-empty"><strong style="display:block;color:#fff;margin-bottom:5px">No GameChanger clips published yet.</strong>Paste a GameChanger clip/share link in <b>Coach Control Center → GameChanger & Post-Game</b> and it will appear here automatically.</div>`;
+}
+let GC_SCHEDULE_LOADING=false;
+function initGameChangerScheduleWidget(){
+  const target=document.querySelector('#gc-schedule-widget-783r');
+  if(!target || target.dataset.gcReady==='1' || GC_SCHEDULE_LOADING)return;
+
+  const start=()=>{
+    try{
+      if(!window.GC?.team?.schedule?.init)throw new Error('GameChanger widget did not initialize.');
+      window.GC.team.schedule.init({
+        target:'#gc-schedule-widget-783r',
+        widgetId:'d72291ad-6f8a-43e5-ae85-0703ed7297ec',
+        maxVerticalGamesVisible:4
+      });
+      target.dataset.gcReady='1';
+      GC_SCHEDULE_LOADING=false;
+    }catch(e){
+      GC_SCHEDULE_LOADING=false;
+      target.innerHTML=`<div class="gc-widget-error"><div><strong>GameChanger schedule unavailable.</strong><span>You can still open the official team page.</span><div style="margin-top:14px"><a class="button orange" href="${esc(gameChangerTeamUrl())}" target="_blank" rel="noopener">Open GameChanger</a></div></div></div>`;
+    }
+  };
+
+  if(window.GC?.team?.schedule?.init){start();return;}
+
+  GC_SCHEDULE_LOADING=true;
+  let script=document.querySelector('script[data-storm-gc-sdk]');
+  if(!script){
+    script=document.createElement('script');
+    script.src='https://widgets.gc.com/static/js/sdk.v1.js';
+    script.async=true;
+    script.dataset.stormGcSdk='1';
+    script.onload=start;
+    script.onerror=()=>{
+      GC_SCHEDULE_LOADING=false;
+      target.innerHTML=`<div class="gc-widget-error"><div><strong>Could not load GameChanger.</strong><span>The rest of The Eye is still available.</span><div style="margin-top:14px"><a class="button orange" href="${esc(gameChangerTeamUrl())}" target="_blank" rel="noopener">Open GameChanger</a></div></div></div>`;
+    };
+    document.head.appendChild(script);
+  }else{
+    script.addEventListener('load',start,{once:true});
+  }
+}
+function renderGameChangerEye(){
+  renderGameChangerVideoHub();
+  initGameChangerScheduleWidget();
+}
+
 function renderHomeDeferred(token){
   if(token!==HOME_RENDER_TOKEN || document.body.dataset.page!=='home')return;
 
   injectStormEnhancementStyles();
+  renderGameChangerEye();
 
   const feat=arr('videos').find(v=>yes(v.Featured))||arr('videos')[0];
   if($('#featured-video')){
